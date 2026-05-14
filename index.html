@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Einstiegsliste</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #ffffff; color: #111111; font-family: -apple-system, sans-serif; min-height: 100vh; }
+
+  header {
+    background: #1a1d27; border-bottom: 3px solid #f0b429;
+    padding: 12px 16px; display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-family: monospace; font-size: 13px; font-weight: 700; color: #f0b429; letter-spacing: 3px; text-transform: uppercase; }
+  #badge { font-family: monospace; font-size: 14px; color: #3dd68c; font-weight: 700; }
+
+  .stop-header {
+    background: #f5f5f5; padding: 10px 16px;
+    display: flex; align-items: baseline; gap: 10px;
+    position: sticky; top: 53px; z-index: 50;
+    border-bottom: 1px solid #ddd; border-top: 1px solid #ddd;
+  }
+  .stop-time { font-family: monospace; font-size: 16px; font-weight: 700; color: #d97706; }
+  .stop-name { font-size: 13px; color: #111; flex: 1; font-weight: 600; }
+  .stop-count { font-family: monospace; font-size: 11px; color: #666; }
+
+  .pax-row {
+    display: flex; align-items: center; padding: 14px 16px;
+    border-bottom: 1px solid #eee; gap: 12px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; transition: background 0.15s;
+    user-select: none; background: #fff;
+  }
+  .pax-row.checked { background: #f0fdf4; }
+
+  .seat {
+    width: 36px; height: 36px; border: 2px solid #ccc; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: monospace; font-size: 13px; font-weight: 700; color: #333; flex-shrink: 0;
+  }
+  .pax-row.checked .seat { border-color: #16a34a; color: #16a34a; background: #dcfce7; }
+
+  .name { flex: 1; font-size: 16px; color: #111; font-weight: 400; }
+  .pax-row.checked .name { color: #aaa; text-decoration: line-through; }
+
+  .check {
+    width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s;
+  }
+  .pax-row.checked .check { border-color: #16a34a; background: #16a34a; }
+  .check svg { opacity: 0; }
+  .pax-row.checked .check svg { opacity: 1; }
+
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #1a1d27; border-top: 2px solid #f0b429;
+    padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .progress-wrap { flex: 1; height: 6px; background: #444; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #3dd68c; border-radius: 3px; transition: width 0.3s; }
+  .reset-btn {
+    background: transparent; color: #aaa; border: 1px solid #444;
+    padding: 8px 14px; font-family: monospace; font-size: 11px;
+    cursor: pointer; border-radius: 2px;
+  }
+  main { padding-bottom: 80px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Einstiegsliste</h1>
+  <span id="badge"></span>
+</header>
+<main id="main"></main>
+<div class="bottom-bar">
+  <button class="reset-btn" onclick="resetAll()">↩ Reset</button>
+  <div class="progress-wrap"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+</div>
+<script>
+const DATA = [
+  { uhrzeit:"04:30", ort:"Rieseby, Betriebshof, Hufeisenweg 1a", fahrgaeste:[
+    {name:"Bendsen, Wolfgang",sitz:"1"},{name:"Bendsen, Marlis",sitz:"2"},
+    {name:"Daniels, Kirstin",sitz:"3"},{name:"Daniels, Wolfgang",sitz:"4"},
+    {name:"Ueberrick, Marion",sitz:"11"},{name:"Ueberrick, Ralf",sitz:"12"},
+    {name:"Reimer, Karin",sitz:"33"},{name:"Will, Günter",sitz:"9"},
+    {name:"Will, Ingelore",sitz:"10"},{name:"Schröder, Margrit",sitz:"16"}
+  ]},
+  { uhrzeit:"05:00", ort:"Eckernförde, ZOB, Busspur 2", fahrgaeste:[
+    {name:"Breiter, Carmen",sitz:"22"},{name:"Faulhaber, Bärbel",sitz:"13"},
+    {name:"Labrenz, Edeltraut",sitz:"39"},{name:"Franzen, Uta",sitz:"40"},
+    {name:"Lorenzen, Klaus",sitz:"17"},{name:"Lorenzen, Helga",sitz:"18"},
+    {name:"Michaelis, Maren",sitz:"23"},{name:"Michaelis, Joachim",sitz:"24"}
+  ]},
+  { uhrzeit:"05:05", ort:"Eckernförde, Berliner Str., Sandkrug", fahrgaeste:[
+    {name:"Jankowski, Christa",sitz:"21"}
+  ]},
+  { uhrzeit:"05:15", ort:"Gettorf, Bahnhofsvorplatz", fahrgaeste:[
+    {name:"Doose, Hans-Jürgen",sitz:"5"},{name:"Doose, Gisela",sitz:"6"},
+    {name:"Siemsen, Brigitte",sitz:"7"}
+  ]}
+];
+
+const total = DATA.reduce((s,h) => s + h.fahrgaeste.length, 0);
+let checked = 0;
+
+DATA.forEach((stop) => {
+  const block = document.createElement('div');
+  block.innerHTML = `<div class="stop-header">
+    <span class="stop-time">${stop.uhrzeit}</span>
+    <span class="stop-name">${stop.ort}</span>
+    <span class="stop-count">${stop.fahrgaeste.length} Pers.</span>
+  </div>`;
+  stop.fahrgaeste.forEach((p) => {
+    const row = document.createElement('div');
+    row.className = 'pax-row';
+    row.innerHTML = `<div class="seat">${p.sitz}</div>
+      <div class="name">${p.name}</div>
+      <div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M2.5 7L5.5 10L11.5 4" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg></div>`;
+    row.onclick = () => {
+      const on = row.classList.toggle('checked');
+      checked += on ? 1 : -1;
+      saveState();
+      update();
+    };
+    block.appendChild(row);
+  });
+  document.getElementById('main').appendChild(block);
+});
+
+function update() {
+  document.getElementById('progress').style.width = (checked/total*100) + '%';
+  document.getElementById('badge').textContent = checked + '/' + total;
+}
+
+function saveState() {
+  const state = {};
+  document.querySelectorAll('.pax-row').forEach((r, i) => {
+    state[i] = r.classList.contains('checked');
+  });
+  localStorage.setItem('checklist', JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem('checklist');
+  if (!saved) return;
+  const state = JSON.parse(saved);
+  document.querySelectorAll('.pax-row').forEach((r, i) => {
+    if (state[i]) { r.classList.add('checked'); checked++; }
+  });
+}
+
+function resetAll() {
+  if (!confirm('Alle Häkchen entfernen?')) return;
+  document.querySelectorAll('.pax-row.checked').forEach(r => r.classList.remove('checked'));
+  checked = 0;
+  localStorage.removeItem('checklist');
+  update();
+}
+
+loadState();
+update();
+</script>
+</body>
+</html>
