@@ -16,6 +16,11 @@
   header h1 { font-family: monospace; font-size: 13px; font-weight: 700; color: #f0b429; letter-spacing: 3px; text-transform: uppercase; }
   #badge { font-family: monospace; font-size: 14px; color: #3dd68c; font-weight: 700; }
 
+  #reiseziel {
+    background: #1a1d27; color: #aaa; padding: 8px 16px;
+    font-family: monospace; font-size: 11px; border-bottom: 1px solid #333;
+  }
+
   .stop-header {
     background: #f5f5f5; padding: 10px 16px;
     display: flex; align-items: baseline; gap: 10px;
@@ -41,7 +46,7 @@
   }
   .pax-row.checked .seat { border-color: #16a34a; color: #16a34a; background: #dcfce7; }
 
-  .name { flex: 1; font-size: 16px; color: #111; font-weight: 400; }
+  .name { flex: 1; font-size: 16px; color: #111; }
   .pax-row.checked .name { color: #aaa; text-decoration: line-through; }
 
   .check {
@@ -64,6 +69,8 @@
     padding: 8px 14px; font-family: monospace; font-size: 11px;
     cursor: pointer; border-radius: 2px;
   }
+
+  #error { padding: 40px 20px; text-align: center; color: #e00; font-size: 14px; }
   main { padding-bottom: 80px; }
 </style>
 </head>
@@ -72,96 +79,101 @@
   <h1>Einstiegsliste</h1>
   <span id="badge"></span>
 </header>
+<div id="reiseziel"></div>
 <main id="main"></main>
 <div class="bottom-bar">
   <button class="reset-btn" onclick="resetAll()">↩ Reset</button>
   <div class="progress-wrap"><div class="progress-fill" id="progress" style="width:0%"></div></div>
 </div>
+
 <script>
-const DATA = [
-  { uhrzeit:"04:30", ort:"Rieseby, Betriebshof, Hufeisenweg 1a", fahrgaeste:[
-    {name:"Bendsen, Wolfgang",sitz:"1"},{name:"Bendsen, Marlis",sitz:"2"},
-    {name:"Daniels, Kirstin",sitz:"3"},{name:"Daniels, Wolfgang",sitz:"4"},
-    {name:"Ueberrick, Marion",sitz:"11"},{name:"Ueberrick, Ralf",sitz:"12"},
-    {name:"Reimer, Karin",sitz:"33"},{name:"Will, Günter",sitz:"9"},
-    {name:"Will, Ingelore",sitz:"10"},{name:"Schröder, Margrit",sitz:"16"}
-  ]},
-  { uhrzeit:"05:00", ort:"Eckernförde, ZOB, Busspur 2", fahrgaeste:[
-    {name:"Breiter, Carmen",sitz:"22"},{name:"Faulhaber, Bärbel",sitz:"13"},
-    {name:"Labrenz, Edeltraut",sitz:"39"},{name:"Franzen, Uta",sitz:"40"},
-    {name:"Lorenzen, Klaus",sitz:"17"},{name:"Lorenzen, Helga",sitz:"18"},
-    {name:"Michaelis, Maren",sitz:"23"},{name:"Michaelis, Joachim",sitz:"24"}
-  ]},
-  { uhrzeit:"05:05", ort:"Eckernförde, Berliner Str., Sandkrug", fahrgaeste:[
-    {name:"Jankowski, Christa",sitz:"21"}
-  ]},
-  { uhrzeit:"05:15", ort:"Gettorf, Bahnhofsvorplatz", fahrgaeste:[
-    {name:"Doose, Hans-Jürgen",sitz:"5"},{name:"Doose, Gisela",sitz:"6"},
-    {name:"Siemsen, Brigitte",sitz:"7"}
-  ]}
-];
-
-const total = DATA.reduce((s,h) => s + h.fahrgaeste.length, 0);
+let total = 0;
 let checked = 0;
+let listKey = '';
 
-DATA.forEach((stop) => {
-  const block = document.createElement('div');
-  block.innerHTML = `<div class="stop-header">
-    <span class="stop-time">${stop.uhrzeit}</span>
-    <span class="stop-name">${stop.ort}</span>
-    <span class="stop-count">${stop.fahrgaeste.length} Pers.</span>
-  </div>`;
-  stop.fahrgaeste.forEach((p) => {
-    const row = document.createElement('div');
-    row.className = 'pax-row';
-    row.innerHTML = `<div class="seat">${p.sitz}</div>
-      <div class="name">${p.name}</div>
-      <div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-        <path d="M2.5 7L5.5 10L11.5 4" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg></div>`;
-    row.onclick = () => {
-      const on = row.classList.toggle('checked');
-      checked += on ? 1 : -1;
-      saveState();
-      update();
-    };
-    block.appendChild(row);
-  });
-  document.getElementById('main').appendChild(block);
-});
+async function init() {
+  try {
+    const res = await fetch('liste.json?v=' + Date.now());
+    if (!res.ok) throw new Error('liste.json nicht gefunden');
+    const data = await res.json();
 
-function update() {
-  document.getElementById('progress').style.width = (checked/total*100) + '%';
-  document.getElementById('badge').textContent = checked + '/' + total;
+    // Key für localStorage basierend auf Reiseziel + erster Haltestelle
+    listKey = 'cl_' + (data.reiseziel || '') + (data.haltestellen?.[0]?.uhrzeit || '');
+
+    document.getElementById('reiseziel').textContent = data.reiseziel || '';
+    document.title = data.reiseziel || 'Einstiegsliste';
+
+    const main = document.getElementById('main');
+    total = 0;
+
+    data.haltestellen.forEach((stop) => {
+      const block = document.createElement('div');
+      block.innerHTML = `<div class="stop-header">
+        <span class="stop-time">${stop.uhrzeit}</span>
+        <span class="stop-name">${stop.ort}</span>
+        <span class="stop-count">${stop.fahrgaeste.length} Pers.</span>
+      </div>`;
+
+      stop.fahrgaeste.forEach((p) => {
+        total++;
+        const row = document.createElement('div');
+        row.className = 'pax-row';
+        row.dataset.key = p.sitz + '_' + p.name;
+        row.innerHTML = `<div class="seat">${p.sitz}</div>
+          <div class="name">${p.name}</div>
+          <div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7L5.5 10L11.5 4" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg></div>`;
+        row.onclick = () => {
+          const on = row.classList.toggle('checked');
+          checked += on ? 1 : -1;
+          saveState();
+          update();
+        };
+        block.appendChild(row);
+      });
+      main.appendChild(block);
+    });
+
+    loadState();
+    update();
+
+  } catch(e) {
+    document.getElementById('main').innerHTML = `<div id="error">Fehler: ${e.message}</div>`;
+  }
 }
 
 function saveState() {
   const state = {};
-  document.querySelectorAll('.pax-row').forEach((r, i) => {
-    state[i] = r.classList.contains('checked');
+  document.querySelectorAll('.pax-row').forEach(r => {
+    state[r.dataset.key] = r.classList.contains('checked');
   });
-  localStorage.setItem('checklist', JSON.stringify(state));
+  localStorage.setItem(listKey, JSON.stringify(state));
 }
 
 function loadState() {
-  const saved = localStorage.getItem('checklist');
+  const saved = localStorage.getItem(listKey);
   if (!saved) return;
   const state = JSON.parse(saved);
-  document.querySelectorAll('.pax-row').forEach((r, i) => {
-    if (state[i]) { r.classList.add('checked'); checked++; }
+  document.querySelectorAll('.pax-row').forEach(r => {
+    if (state[r.dataset.key]) { r.classList.add('checked'); checked++; }
   });
+}
+
+function update() {
+  document.getElementById('progress').style.width = (checked / total * 100) + '%';
+  document.getElementById('badge').textContent = checked + '/' + total;
 }
 
 function resetAll() {
   if (!confirm('Alle Häkchen entfernen?')) return;
   document.querySelectorAll('.pax-row.checked').forEach(r => r.classList.remove('checked'));
   checked = 0;
-  localStorage.removeItem('checklist');
+  localStorage.removeItem(listKey);
   update();
 }
 
-loadState();
-update();
+init();
 </script>
 </body>
 </html>
