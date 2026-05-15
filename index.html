@@ -62,6 +62,14 @@
   .check svg { opacity: 0; }
   .pax-row.checked .check svg { opacity: 1; }
 
+  .pax-row.absent { background: #fff5f5; }
+  .pax-row.absent .seat { border-color: #dc2626; color: #dc2626; background: #fee2e2; }
+  .pax-row.absent .name { color: #dc2626; text-decoration: line-through; }
+  .pax-row.absent .check { border-color: #dc2626; background: #dc2626; }
+  .absent-label { display: none; font-size: 10px; color: #dc2626; font-weight: 600; white-space: nowrap; }
+  .pax-row.absent .absent-label { display: block; }
+  .pax-row.absent .check svg { opacity: 0; }
+
   .bottom-bar {
     position: fixed; bottom: 0; left: 0; right: 0;
     background: #1a1d27; border-top: 2px solid #f0b429;
@@ -130,8 +138,16 @@ async function init() {
             <path d="M2.5 7L5.5 10L11.5 4" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg></div>`;
         row.onclick = () => {
-          const on = row.classList.toggle('checked');
-          checked += on ? 1 : -1;
+          if (row.classList.contains('checked')) {
+            row.classList.remove('checked');
+            row.classList.add('absent');
+            checked--;
+          } else if (row.classList.contains('absent')) {
+            row.classList.remove('absent');
+          } else {
+            row.classList.add('checked');
+            checked++;
+          }
           saveState();
           update();
         };
@@ -151,7 +167,9 @@ async function init() {
 function saveState() {
   const state = {};
   document.querySelectorAll('.pax-row').forEach(r => {
-    state[r.dataset.key] = r.classList.contains('checked');
+    if (r.classList.contains('checked')) state[r.dataset.key] = 'checked';
+    else if (r.classList.contains('absent')) state[r.dataset.key] = 'absent';
+    else state[r.dataset.key] = '';
   });
   localStorage.setItem(listKey, JSON.stringify(state));
 }
@@ -161,13 +179,19 @@ function loadState() {
   if (!saved) return;
   const state = JSON.parse(saved);
   document.querySelectorAll('.pax-row').forEach(r => {
-    if (state[r.dataset.key]) { r.classList.add('checked'); checked++; }
+    if (state[r.dataset.key] === 'checked') { r.classList.add('checked'); checked++; }
+    else if (state[r.dataset.key] === 'absent') { r.classList.add('absent'); }
   });
 }
 
 function update() {
-  document.getElementById('progress').style.width = (checked / total * 100) + '%';
-  document.getElementById('badge').textContent = checked + '/' + total;
+  const absent = document.querySelectorAll('.pax-row.absent').length;
+  const effective = total - absent;
+  const pct = effective > 0 ? (checked / effective * 100) : 0;
+  document.getElementById('progress').style.width = pct + '%';
+  let badge = checked + '/' + effective;
+  if (absent > 0) badge += '  (' + absent + ' abwesend)';
+  document.getElementById('badge').textContent = badge;
 }
 
 function resetAll() {
