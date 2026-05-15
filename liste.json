@@ -1,50 +1,77 @@
 {
-  "reiseziel": "Frühlingszauber im Kleinwalsertal - Mittelberg",
+  "reiseziel": "Insel Föhr mit Katamaran – 15.05.26",
   "haltestellen": [
     {
-      "uhrzeit": "04:30",
-      "ort": "Rieseby, Betriebshof, Hufeisenweg 1a",
+      "uhrzeit": "05:45",
+      "ort": "Kiel, ZOB – Auguste-Viktoria-Str. 6-8",
       "fahrgaeste": [
-        {"name": "Bendsen, Wolfgang", "sitz": "1"},
-        {"name": "Bendsen, Marlis", "sitz": "2"},
-        {"name": "Daniels, Kirstin", "sitz": "3"},
-        {"name": "Daniels, Wolfgang", "sitz": "4"},
-        {"name": "Ueberrick, Marion", "sitz": "11"},
-        {"name": "Ueberrick, Ralf", "sitz": "12"},
-        {"name": "Reimer, Karin", "sitz": "33"},
-        {"name": "Will, Günter", "sitz": "9"},
-        {"name": "Will, Ingelore", "sitz": "10"},
-        {"name": "Schröder, Margrit", "sitz": "16"}
+        {"name": "Shaw, Eva", "sitz": "9"},
+        {"name": "Albat, Maren", "sitz": "10"},
+        {"name": "Döberl, Hanna", "sitz": ""},
+        {"name": "Zeyen, Gabriele", "sitz": ""},
+        {"name": "Steffen, Jens-Udo", "sitz": "40"}
       ]
     },
     {
-      "uhrzeit": "05:00",
-      "ort": "Eckernförde, ZOB, Busspur 2",
-      "fahrgaeste": [
-        {"name": "Breiter, Carmen", "sitz": "22"},
-        {"name": "Faulhaber, Bärbel", "sitz": "13"},
-        {"name": "Labrenz, Edeltraut", "sitz": "39"},
-        {"name": "Franzen, Uta", "sitz": "40"},
-        {"name": "Lorenzen, Klaus", "sitz": "17"},
-        {"name": "Lorenzen, Helga", "sitz": "18"},
-        {"name": "Michaelis, Maren", "sitz": "23"},
-        {"name": "Michaelis, Joachim", "sitz": "24"}
-      ]
-    },
-    {
-      "uhrzeit": "05:05",
-      "ort": "Eckernförde, Berliner Str., Sandkrug",
-      "fahrgaeste": [
-        {"name": "Jankowski, Christa", "sitz": "21"}
-      ]
-    },
-    {
-      "uhrzeit": "05:15",
+      "uhrzeit": "06:15",
       "ort": "Gettorf, Bahnhofsvorplatz",
       "fahrgaeste": [
-        {"name": "Doose, Hans-Jürgen", "sitz": "5"},
-        {"name": "Doose, Gisela", "sitz": "6"},
-        {"name": "Siemsen, Brigitte", "sitz": "7"}
+        {"name": "Schulz, Monika", "sitz": "21"},
+        {"name": "Klaaws, Ilona", "sitz": "22"},
+        {"name": "Gras, Anneliese", "sitz": "25"},
+        {"name": "Logaida, Hildegard", "sitz": "26"},
+        {"name": "Ritter", "sitz": "29"},
+        {"name": "Ritter", "sitz": "30"}
+      ]
+    },
+    {
+      "uhrzeit": "06:20",
+      "ort": "Eckernförde, Berliner Str., Sandkrug",
+      "fahrgaeste": [
+        {"name": "Ingwersen", "sitz": "8"}
+      ]
+    },
+    {
+      "uhrzeit": "06:30",
+      "ort": "Eckernförde, ZOB – Busspur 2",
+      "fahrgaeste": [
+        {"name": "Ingwersen, Ingrid", "sitz": "6"},
+        {"name": "Ingwersen", "sitz": "7"},
+        {"name": "Garling, Irmtraut", "sitz": "1"},
+        {"name": "Mahr, Gisela", "sitz": "2"},
+        {"name": "Mahr, Rainer", "sitz": "3"},
+        {"name": "Andersen, Karin", "sitz": "4"},
+        {"name": "Mech, Marlies", "sitz": "15"},
+        {"name": "Leverkühne, Karin", "sitz": "16"},
+        {"name": "Ohlsen, Ina", "sitz": "12"},
+        {"name": "Findersen, Katja", "sitz": "33"},
+        {"name": "Findersen", "sitz": "34"},
+        {"name": "Findersen", "sitz": "35"}
+      ]
+    },
+    {
+      "uhrzeit": "06:35",
+      "ort": "Eckernförde, Riesebyer Str., BH ggü. Havenstein",
+      "fahrgaeste": [
+        {"name": "Stork, Roger", "sitz": "23"},
+        {"name": "Grandt-Stork, Ingeborg", "sitz": "24"}
+      ]
+    },
+    {
+      "uhrzeit": "07:00",
+      "ort": "Rieseby, Betriebshof, Hufeisenweg 1a",
+      "fahrgaeste": [
+        {"name": "Pappa, Roland", "sitz": "17"},
+        {"name": "Dr. Pappa, Barbara", "sitz": "18"},
+        {"name": "Wieber, Ulrich", "sitz": "13"},
+        {"name": "Wieber, Gunda", "sitz": "14"}
+      ]
+    },
+    {
+      "uhrzeit": "07:20",
+      "ort": "Schleswig, P-Schleihalle, Gottorfer Damm 2",
+      "fahrgaeste": [
+        {"name": "Karde, Margret", "sitz": "5"}
       ]
     }
   ]
