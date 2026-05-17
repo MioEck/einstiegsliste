@@ -3,106 +3,418 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Einstiegsliste</title>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Einstiegsliste">
 <link rel="apple-touch-icon" href="icon.png">
+<title>Einstiegsliste</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #ffffff; color: #111111; font-family: -apple-system, sans-serif; min-height: 100vh; }
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0eff8;
+    --muted: #5a5870;
+    --accent: #7c6af7;
+    --accent-glow: rgba(124,106,247,0.25);
+    --green: #22c97a;
+    --green-bg: rgba(34,201,122,0.08);
+    --red: #f05252;
+    --red-bg: rgba(240,82,82,0.08);
+    --header-h: 68px;
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+
+  /* subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
   header {
-    background: #1a1d27; border-bottom: 3px solid #f0b429;
-    padding: 12px 16px; display: flex; align-items: center;
-    justify-content: space-between; position: sticky; top: 0; z-index: 100;
+    height: var(--header-h);
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
-  header h1 { font-family: monospace; font-size: 13px; font-weight: 700; color: #f0b429; letter-spacing: 3px; text-transform: uppercase; }
-  #badge { font-family: monospace; font-size: 14px; color: #3dd68c; font-weight: 700; }
 
-  #reiseziel {
-    background: #1a1d27; color: #aaa; padding: 8px 16px;
-    font-family: monospace; font-size: 11px; border-bottom: 1px solid #333;
+  .logo-wrap { display: flex; flex-direction: column; gap: 2px; }
+
+  .logo-main {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1;
   }
+
+  .logo-main span {
+    color: var(--accent);
+  }
+
+  .logo-sub {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .counter {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .counter-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── TRIP BANNER ── */
+  .trip-banner {
+    display: none;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, rgba(124,106,247,0.12), rgba(124,106,247,0.04));
+    border-bottom: 1px solid rgba(124,106,247,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trip-banner::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent), transparent);
+  }
+
+  .trip-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ── STOP BLOCK ── */
+  .stop-block { position: relative; z-index: 1; }
 
   .stop-header {
-    background: #f5f5f5; padding: 10px 16px;
-    display: flex; align-items: baseline; gap: 10px;
-    position: sticky; top: 53px; z-index: 50;
-    border-bottom: 1px solid #ddd; border-top: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 20px 10px;
+    position: sticky;
+    top: var(--header-h);
+    z-index: 50;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
-  .stop-time { font-family: monospace; font-size: 16px; font-weight: 700; color: #d97706; }
-  .stop-name { font-size: 13px; color: #111; flex: 1; font-weight: 600; }
-  .stop-count { font-family: monospace; font-size: 11px; color: #666; }
+
+  .stop-time-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .stop-details { flex: 1; min-width: 0; }
+
+  .stop-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stop-count {
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    margin-top: 1px;
+  }
+
+  /* ── PASSENGER ROWS ── */
+  .pax-list {
+    padding: 6px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
 
   .pax-row {
-    display: flex; align-items: center; padding: 14px 16px;
-    border-bottom: 1px solid #eee; gap: 12px; cursor: pointer;
-    -webkit-tap-highlight-color: transparent; transition: background 0.15s;
-    user-select: none; background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
   }
-  .pax-row.checked { background: #f0fdf4; }
 
-  .seat {
-    width: 36px; height: 36px; border: 2px solid #ccc; border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: monospace; font-size: 13px; font-weight: 700; color: #333; flex-shrink: 0;
+  .pax-row:active { transform: scale(0.98); }
+
+  .pax-row.checked {
+    background: var(--green-bg);
+    border-color: rgba(34,201,122,0.25);
   }
-  .pax-row.checked .seat { border-color: #16a34a; color: #16a34a; background: #dcfce7; }
 
-  .name { flex: 1; font-size: 16px; color: #111; }
-  .pax-row.checked .name { color: #aaa; text-decoration: line-through; }
-
-  .check {
-    width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s;
+  .pax-row.absent {
+    background: var(--red-bg);
+    border-color: rgba(240,82,82,0.25);
   }
-  .pax-row.checked .check { border-color: #16a34a; background: #16a34a; }
-  .check svg { opacity: 0; }
-  .pax-row.checked .check svg { opacity: 1; }
 
-  .pax-row.absent { background: #fff5f5; }
-  .pax-row.absent .seat { border-color: #dc2626; color: #dc2626; background: #fee2e2; }
-  .pax-row.absent .name { color: #dc2626; text-decoration: line-through; }
-  .pax-row.absent .check { border-color: #dc2626; background: #dc2626; }
-  .absent-label { display: none; font-size: 10px; color: #dc2626; font-weight: 600; white-space: nowrap; }
-  .pax-row.absent .absent-label { display: block; }
-  .pax-row.absent .check svg { opacity: 0; }
+  .seat-badge {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
 
+  .pax-row.checked .seat-badge {
+    background: rgba(34,201,122,0.15);
+    border-color: rgba(34,201,122,0.3);
+    color: var(--green);
+  }
+
+  .pax-row.absent .seat-badge {
+    background: rgba(240,82,82,0.15);
+    border-color: rgba(240,82,82,0.3);
+    color: var(--red);
+  }
+
+  .pax-info { flex: 1; min-width: 0; }
+
+  .pax-name {
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--text);
+    transition: color 0.15s;
+    line-height: 1.2;
+  }
+
+  .pax-row.checked .pax-name {
+    color: var(--green);
+    text-decoration: line-through;
+    text-decoration-color: rgba(34,201,122,0.4);
+  }
+
+  .pax-row.absent .pax-name {
+    color: var(--red);
+    text-decoration: line-through;
+    text-decoration-color: rgba(240,82,82,0.4);
+  }
+
+  .absent-tag {
+    display: none;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+    background: rgba(240,82,82,0.25);
+    border: 1px solid rgba(240,82,82,0.6);
+    padding: 3px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  .pax-row.absent .absent-tag { display: block; }
+
+  .check-ring {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .check-ring svg { opacity: 0; transition: opacity 0.15s; }
+
+  .pax-row.checked .check-ring {
+    border-color: var(--green);
+    background: var(--green);
+    box-shadow: 0 0 12px rgba(34,201,122,0.4);
+  }
+  .pax-row.checked .check-ring svg { opacity: 1; }
+
+  .pax-row.absent .check-ring {
+    border-color: var(--red);
+    background: var(--red);
+    box-shadow: 0 0 12px rgba(240,82,82,0.4);
+  }
+
+  /* ── BOTTOM BAR ── */
   .bottom-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: #1a1d27; border-top: 2px solid #f0b429;
-    padding: 10px 16px; display: flex; align-items: center; gap: 12px;
-  }
-  .progress-wrap { flex: 1; height: 6px; background: #444; border-radius: 3px; overflow: hidden; }
-  .progress-fill { height: 100%; background: #3dd68c; border-radius: 3px; transition: width 0.3s; }
-  .reset-btn {
-    background: transparent; color: #aaa; border: 1px solid #444;
-    padding: 8px 14px; font-family: monospace; font-size: 11px;
-    cursor: pointer; border-radius: 2px;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 100;
   }
 
-  #error { padding: 40px 20px; text-align: center; color: #e00; font-size: 14px; }
-  main { padding-bottom: 80px; }
+  .reset-btn {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 9px 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .reset-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  .progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  .absent-info {
+    font-size: 10px;
+    color: var(--red);
+    font-weight: 500;
+    white-space: nowrap;
+    display: none;
+    letter-spacing: 0.05em;
+  }
+
+  #error-msg {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--red);
+    font-size: 14px;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
+  }
 </style>
 </head>
 <body>
+
 <header>
-  <h1>Einstiegsliste</h1>
-  <span style="color:#e00;font-weight:700;font-size:26px;font-family:monospace;">Der Riesebyer</span><span id="badge"></span>
+  <div class="logo-wrap">
+    <div class="logo-main">Der <span style="color:#e02020">Riesebyer</span></div>
+    <div class="logo-sub">Einstiegsliste</div>
+  </div>
+  <div class="header-right">
+    <span class="counter" id="badge">–</span>
+    <span class="counter-label">Eingestiegen</span>
+  </div>
 </header>
-<div id="reiseziel"></div>
+
+<div class="trip-banner" id="trip-banner">
+  <div class="trip-title" id="trip-name"></div>
+</div>
+
 <main id="main"></main>
+
 <div class="bottom-bar">
   <button class="reset-btn" onclick="resetAll()">↩ Reset</button>
-  <div class="progress-wrap"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+  <span class="absent-info" id="absent-info"></span>
 </div>
 
 <script>
-let total = 0;
-let checked = 0;
-let listKey = '';
+let total = 0, checked = 0, listKey = '';
 
 async function init() {
   try {
@@ -110,33 +422,50 @@ async function init() {
     if (!res.ok) throw new Error('liste.json nicht gefunden');
     const data = await res.json();
 
-    // Key für localStorage basierend auf Reiseziel + erster Haltestelle
-    listKey = 'cl_' + (data.reiseziel || '') + (data.haltestellen?.[0]?.uhrzeit || '');
+    listKey = 'rl3_' + (data.reiseziel || '') + (data.haltestellen?.[0]?.uhrzeit || '');
 
-    document.getElementById('reiseziel').textContent = data.reiseziel || '';
-    document.title = data.reiseziel || 'Einstiegsliste';
+    if (data.reiseziel) {
+      document.getElementById('trip-name').textContent = data.reiseziel;
+      document.getElementById('trip-banner').style.display = 'block';
+      document.title = data.reiseziel;
+    }
 
     const main = document.getElementById('main');
     total = 0;
 
-    data.haltestellen.forEach((stop) => {
+    data.haltestellen.forEach(stop => {
       const block = document.createElement('div');
-      block.innerHTML = `<div class="stop-header">
-        <span class="stop-time">${stop.uhrzeit}</span>
-        <span class="stop-name">${stop.ort}</span>
-        <span class="stop-count">${stop.fahrgaeste.length} Pers.</span>
-      </div>`;
+      block.className = 'stop-block';
 
-      stop.fahrgaeste.forEach((p) => {
+      const hdr = document.createElement('div');
+      hdr.className = 'stop-header';
+      hdr.innerHTML = `
+        ${stop.uhrzeit ? `<div class="stop-time-pill">${stop.uhrzeit}</div>` : ''}
+        <div class="stop-details">
+          <div class="stop-name">${stop.ort}</div>
+          <div class="stop-count">${stop.fahrgaeste.length} Personen</div>
+        </div>`;
+      block.appendChild(hdr);
+
+      const list = document.createElement('div');
+      list.className = 'pax-list';
+
+      stop.fahrgaeste.forEach(p => {
         total++;
         const row = document.createElement('div');
         row.className = 'pax-row';
-        row.dataset.key = p.sitz + '_' + p.name;
-        row.innerHTML = `<div class="seat">${p.sitz}</div>
-          <div class="name">${p.name}</div>
-          <div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2.5 7L5.5 10L11.5 4" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg></div>`;
+        row.dataset.key = (p.sitz || '') + '_' + p.name;
+        row.innerHTML = `
+          ${p.sitz ? `<div class="seat-badge">${p.sitz}</div>` : ''}
+          <div class="pax-info">
+            <div class="pax-name">${p.name}</div>
+          </div>
+          <div class="absent-tag">Abwesend</div>
+          <div class="check-ring">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M1.5 6L4.5 9L10.5 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>`;
         row.onclick = () => {
           if (row.classList.contains('checked')) {
             row.classList.remove('checked');
@@ -148,28 +477,25 @@ async function init() {
             row.classList.add('checked');
             checked++;
           }
-          saveState();
-          update();
+          saveState(); update();
         };
-        block.appendChild(row);
+        list.appendChild(row);
       });
+
+      block.appendChild(list);
       main.appendChild(block);
     });
 
-    loadState();
-    update();
-
+    loadState(); update();
   } catch(e) {
-    document.getElementById('main').innerHTML = `<div id="error">Fehler: ${e.message}</div>`;
+    document.getElementById('main').innerHTML = `<div id="error-msg">⚠ ${e.message}</div>`;
   }
 }
 
 function saveState() {
   const state = {};
   document.querySelectorAll('.pax-row').forEach(r => {
-    if (r.classList.contains('checked')) state[r.dataset.key] = 'checked';
-    else if (r.classList.contains('absent')) state[r.dataset.key] = 'absent';
-    else state[r.dataset.key] = '';
+    state[r.dataset.key] = r.classList.contains('checked') ? 'checked' : r.classList.contains('absent') ? 'absent' : '';
   });
   localStorage.setItem(listKey, JSON.stringify(state));
 }
@@ -180,26 +506,24 @@ function loadState() {
   const state = JSON.parse(saved);
   document.querySelectorAll('.pax-row').forEach(r => {
     if (state[r.dataset.key] === 'checked') { r.classList.add('checked'); checked++; }
-    else if (state[r.dataset.key] === 'absent') { r.classList.add('absent'); }
+    else if (state[r.dataset.key] === 'absent') r.classList.add('absent');
   });
 }
 
 function update() {
   const absent = document.querySelectorAll('.pax-row.absent').length;
   const effective = total - absent;
-  const pct = effective > 0 ? (checked / effective * 100) : 0;
-  document.getElementById('progress').style.width = pct + '%';
-  let badge = checked + '/' + effective;
-  if (absent > 0) badge += '  (' + absent + ' abwesend)';
-  document.getElementById('badge').textContent = badge;
+  document.getElementById('progress').style.width = (effective > 0 ? checked/effective*100 : 0) + '%';
+  document.getElementById('badge').textContent = checked + '/' + effective;
+  const ai = document.getElementById('absent-info');
+  if (absent > 0) { ai.textContent = absent + ' abwesend'; ai.style.display = 'block'; }
+  else ai.style.display = 'none';
 }
 
 function resetAll() {
   if (!confirm('Alle Häkchen entfernen?')) return;
-  document.querySelectorAll('.pax-row.checked').forEach(r => r.classList.remove('checked'));
-  checked = 0;
-  localStorage.removeItem(listKey);
-  update();
+  document.querySelectorAll('.pax-row.checked, .pax-row.absent').forEach(r => r.classList.remove('checked','absent'));
+  checked = 0; localStorage.removeItem(listKey); update();
 }
 
 init();
