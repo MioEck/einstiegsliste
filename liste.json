@@ -1,77 +1,19 @@
 {
-  "reiseziel": "Insel Föhr mit Katamaran – 15.05.26",
+  "reiseziel": "Kontrolle Kappeln",
   "haltestellen": [
     {
-      "uhrzeit": "05:45",
-      "ort": "Kiel, ZOB – Auguste-Viktoria-Str. 6-8",
+      "uhrzeit": "",
+      "ort": "Kappeln",
       "fahrgaeste": [
-        {"name": "Shaw, Eva", "sitz": "9"},
-        {"name": "Albat, Maren", "sitz": "10"},
-        {"name": "Döberl, Hanna", "sitz": ""},
-        {"name": "Zeyen, Gabriele", "sitz": ""},
-        {"name": "Steffen, Jens-Udo", "sitz": "40"}
-      ]
-    },
-    {
-      "uhrzeit": "06:15",
-      "ort": "Gettorf, Bahnhofsvorplatz",
-      "fahrgaeste": [
-        {"name": "Schulz, Monika", "sitz": "21"},
-        {"name": "Klaaws, Ilona", "sitz": "22"},
-        {"name": "Gras, Anneliese", "sitz": "25"},
-        {"name": "Logaida, Hildegard", "sitz": "26"},
-        {"name": "Ritter", "sitz": "29"},
-        {"name": "Ritter", "sitz": "30"}
-      ]
-    },
-    {
-      "uhrzeit": "06:20",
-      "ort": "Eckernförde, Berliner Str., Sandkrug",
-      "fahrgaeste": [
-        {"name": "Ingwersen", "sitz": "8"}
-      ]
-    },
-    {
-      "uhrzeit": "06:30",
-      "ort": "Eckernförde, ZOB – Busspur 2",
-      "fahrgaeste": [
-        {"name": "Ingwersen, Ingrid", "sitz": "6"},
-        {"name": "Ingwersen", "sitz": "7"},
-        {"name": "Garling, Irmtraut", "sitz": "1"},
-        {"name": "Mahr, Gisela", "sitz": "2"},
-        {"name": "Mahr, Rainer", "sitz": "3"},
-        {"name": "Andersen, Karin", "sitz": "4"},
-        {"name": "Mech, Marlies", "sitz": "15"},
-        {"name": "Leverkühne, Karin", "sitz": "16"},
-        {"name": "Ohlsen, Ina", "sitz": "12"},
-        {"name": "Findersen, Katja", "sitz": "33"},
-        {"name": "Findersen", "sitz": "34"},
-        {"name": "Findersen", "sitz": "35"}
-      ]
-    },
-    {
-      "uhrzeit": "06:35",
-      "ort": "Eckernförde, Riesebyer Str., BH ggü. Havenstein",
-      "fahrgaeste": [
-        {"name": "Stork, Roger", "sitz": "23"},
-        {"name": "Grandt-Stork, Ingeborg", "sitz": "24"}
-      ]
-    },
-    {
-      "uhrzeit": "07:00",
-      "ort": "Rieseby, Betriebshof, Hufeisenweg 1a",
-      "fahrgaeste": [
-        {"name": "Pappa, Roland", "sitz": "17"},
-        {"name": "Dr. Pappa, Barbara", "sitz": "18"},
-        {"name": "Wieber, Ulrich", "sitz": "13"},
-        {"name": "Wieber, Gunda", "sitz": "14"}
-      ]
-    },
-    {
-      "uhrzeit": "07:20",
-      "ort": "Schleswig, P-Schleihalle, Gottorfer Damm 2",
-      "fahrgaeste": [
-        {"name": "Karde, Margret", "sitz": "5"}
+        {"name": "Erwig, Monika", "sitz": ""},
+        {"name": "Findersen, Annemarie", "sitz": ""},
+        {"name": "Hartmann, Sieglinde", "sitz": ""},
+        {"name": "Krüger, Rudi Max", "sitz": ""},
+        {"name": "Loesewitz, Marion", "sitz": ""},
+        {"name": "Loesewitz, Wolfgang", "sitz": ""},
+        {"name": "Lund, Lissi", "sitz": ""},
+        {"name": "Ossipow, Jutta", "sitz": ""},
+        {"name": "Reinarz, Ingeborg", "sitz": ""}
       ]
     }
   ]
