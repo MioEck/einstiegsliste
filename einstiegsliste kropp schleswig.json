@@ -1,0 +1,26 @@
+{
+  "gruppen": [
+    {
+      "titel": "Kropp / Schule ZOB",
+      "personen": 2,
+      "fahrgaeste": [
+        { "name": "Gaude", "vorname": "Gabriele", "kontakt": "0151-57916986" },
+        { "name": "Rammer", "vorname": "Ingrid Hedwig", "kontakt": "0160-4102462" }
+      ]
+    },
+    {
+      "titel": "Schleswig / Schleihallenparkplatz",
+      "personen": 8,
+      "fahrgaeste": [
+        { "nr": 1, "name": "Lund", "vorname": "Luise", "kontakt": "0179-4387112" },
+        { "nr": 2, "name": "Masuhr", "vorname": "Petra", "kontakt": "0461-581875" },
+        { "nr": 3, "name": "Nissen-Reimer", "vorname": "Birte", "kontakt": "0176-53839010" },
+        { "nr": 4, "name": "Pargmann", "vorname": "Constanze", "kontakt": "04621-9305266" },
+        { "nr": 5, "name": "Pargmann", "vorname": "Roland", "kontakt": "04621-9305266" },
+        { "nr": 6, "name": "Reimer", "vorname": "Karsten", "kontakt": "04621-34307" },
+        { "nr": 7, "name": "Rugen", "vorname": "Elisabeth", "kontakt": "0170-2468306" },
+        { "nr": 8, "name": "Witt", "vorname": "Christa", "kontakt": "04621-34109" }
+      ]
+    }
+  ]
+}
