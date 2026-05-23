@@ -238,9 +238,20 @@
   .pax-row.checked .seat-badge { background: rgba(34,201,122,0.15); border-color: rgba(34,201,122,0.3); color: var(--green); }
   .pax-row.absent .seat-badge { background: rgba(240,82,82,0.15); border-color: rgba(240,82,82,0.3); color: var(--red); }
 
-  .pax-name { flex: 1; font-size: 19px; font-weight: 400; color: var(--text); transition: color 0.15s; line-height: 1.2; }
+  .pax-name { font-size: 19px; font-weight: 400; color: var(--text); transition: color 0.15s; line-height: 1.2; }
   .pax-row.checked .pax-name { color: var(--green); text-decoration: line-through; text-decoration-color: rgba(34,201,122,0.4); }
   .pax-row.absent .pax-name { color: var(--red); text-decoration: line-through; text-decoration-color: rgba(240,82,82,0.4); }
+
+  .pax-info { flex: 1; min-width: 0; overflow: hidden; }
+  .pax-phone { margin-top: 4px; }
+  .pax-phone a {
+    font-size: 14px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .pax-phone a:hover { text-decoration: underline; }
 
   .absent-tag {
     display: none;
@@ -300,6 +311,10 @@
 
   .progress-track { flex: 1; height: 4px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 4px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+
+  .pax-info { flex: 1; min-width: 0; overflow: hidden; }
+  .pax-phone { font-size: 14px; margin-top: 4px; }
+  .pax-phone a { color: var(--accent); text-decoration: none; font-weight: 500; }
 
   .absent-info { font-size: 10px; color: var(--red); font-weight: 500; white-space: nowrap; display: none; }
 </style>
@@ -405,13 +420,26 @@ function buildList(data) {
       row.dataset.key = (p.sitz || '') + '_' + p.name;
       row.innerHTML = `
         ${p.sitz ? `<div class="seat-badge">${p.sitz}</div>` : ''}
-        <div class="pax-name">${p.name}</div>
+        <div class="pax-info">
+          <div class="pax-name">${p.name}</div>
+          ${p.telefon ? `<div class="pax-phone" style="display:none"><a href="tel:${p.telefon}" onclick="event.stopPropagation()">📞 ${p.telefon}</a></div>` : ''}
+        </div>
         <div class="absent-tag">Abwesend</div>
         <div class="check-ring">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M1.5 6L4.5 9L10.5 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>`;
+
+      // Phone toggle on name tap
+      if (p.telefon) {
+        row.querySelector('.pax-name').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const ph = row.querySelector('.pax-phone');
+          ph.style.display = ph.style.display === 'none' ? 'block' : 'none';
+        });
+      }
+
       row.onclick = () => {
         if (row.classList.contains('checked')) {
           row.classList.remove('checked'); row.classList.add('absent'); checked--;
