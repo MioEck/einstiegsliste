@@ -787,29 +787,32 @@ Gib das Ergebnis NUR als reines JSON zurück (kein Markdown, keine Erklärungen)
 
 Fehlende Felder (uhrzeit, sitz, telefon, reiseziel) komplett weglassen. Nur das JSON ausgeben.`;
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
-          generationConfig: { temperature: 0.1 }
-        })
-      }
-    );
-
-    if (!res.ok) {
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash'];
+    let res, lastErr;
+    for (const model of models) {
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
+            generationConfig: { temperature: 0.1 }
+          })
+        }
+      );
+      if (res.ok) break;
       const err = await res.json().catch(() => ({}));
       const msg = err.error?.message || '';
       if (res.status === 429 || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
         throw new Error('Quota überschritten – bitte kurz warten und nochmal versuchen.');
       }
-      if (res.status === 400 && msg.includes('API_KEY')) {
+      if (res.status === 400 || msg.includes('API_KEY')) {
         throw new Error('Ungültiger API-Schlüssel. Bitte im ⚙-Menü prüfen.');
       }
-      throw new Error('API-Fehler ' + res.status);
+      lastErr = res.status;
     }
+    if (!res.ok) throw new Error('Kein verfügbares Modell gefunden (Fehler ' + lastErr + '). Bitte API-Schlüssel von aistudio.google.com verwenden.');
 
     const result = await res.json();
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
