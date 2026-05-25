@@ -317,6 +317,179 @@
   .pax-phone a { color: var(--accent); text-decoration: none; font-weight: 500; }
 
   .absent-info { font-size: 10px; color: var(--red); font-weight: 500; white-space: nowrap; display: none; }
+
+  /* ── SCAN BUTTON ── */
+  .scan-btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 16px 32px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 300px;
+    transition: all 0.15s;
+  }
+  .scan-btn:active { opacity: 0.8; }
+  .scan-btn:hover { border-color: var(--muted); }
+
+  .load-divider { font-size: 12px; color: var(--muted); }
+
+  /* ── SETTINGS BTN ── */
+  .settings-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 8px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .settings-btn:hover { border-color: var(--border); color: var(--text); }
+  .settings-btn.has-key { color: var(--green); }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    align-self: center;
+    margin-bottom: 4px;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--text);
+  }
+  .modal-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .modal-sub a { color: var(--accent); text-decoration: none; }
+
+  .modal-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    width: 100%;
+    outline: none;
+    letter-spacing: 0.05em;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+  }
+  .modal-btn:active { opacity: 0.8; }
+  .modal-btn.primary { background: var(--accent); color: #fff; }
+  .modal-btn.secondary { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  /* ── LOADING OVERLAY ── */
+  .scan-loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .scan-loading.active { display: flex; }
+  .scan-spinner {
+    width: 52px; height: 52px;
+    border: 3px solid var(--surface2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scan-loading-text { font-size: 15px; color: var(--muted); letter-spacing: 0.05em; }
+
+  /* ── PREVIEW LIST ── */
+  .preview-scroll {
+    max-height: 45vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .preview-stop {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .preview-stop-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .preview-person {
+    font-size: 14px;
+    color: var(--text);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+  .preview-person:last-child { border-bottom: none; padding-bottom: 0; }
+  .preview-seat { color: var(--muted); font-size: 12px; min-width: 18px; }
 </style>
 </head>
 <body>
@@ -326,9 +499,12 @@
     <div class="logo-main">Der <span>Riesebyer</span></div>
     <div class="logo-sub">Einstiegsliste</div>
   </div>
-  <div class="header-right">
-    <span class="counter" id="badge">–</span>
-    <span class="counter-label">Eingestiegen</span>
+  <div class="header-right" style="flex-direction:row;align-items:center;gap:10px;">
+    <button class="settings-btn" id="settings-btn" onclick="openApiModal()" title="Gemini API-Schlüssel">⚙</button>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+      <span class="counter" id="badge">–</span>
+      <span class="counter-label">Eingestiegen</span>
+    </div>
   </div>
 </header>
 
@@ -340,6 +516,9 @@
   <div class="error-box" id="error-box"></div>
   <button class="load-btn" onclick="document.getElementById('file-input').click()">📂 Datei auswählen</button>
   <input type="file" id="file-input" accept=".json,application/json" onchange="loadFile(event)">
+  <div class="load-divider">– oder –</div>
+  <button class="scan-btn" onclick="startScan()">📷 Liste fotografieren</button>
+  <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="scanPhoto(event)">
 </div>
 
 <!-- LIST VIEW -->
@@ -348,6 +527,43 @@
     <div class="trip-title" id="trip-name"></div>
   </div>
   <main id="main"></main>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="api-modal" onclick="handleModalBgClick(event,'api-modal')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚙ Gemini API-Schlüssel</div>
+    <div class="modal-sub">
+      Kostenloser Schlüssel unter <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a> → „Get API key".<br>
+      Der Schlüssel wird nur lokal auf diesem Gerät gespeichert.
+    </div>
+    <input type="text" class="modal-input" id="api-key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeApiModal()">Abbrechen</button>
+      <button class="modal-btn primary" onclick="saveApiKey()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN LOADING -->
+<div class="scan-loading" id="scan-loading">
+  <div class="scan-spinner"></div>
+  <div class="scan-loading-text">KI analysiert Foto …</div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="preview-modal" onclick="handleModalBgClick(event,'preview-modal')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 Erkannte Liste</div>
+    <div class="modal-sub" id="preview-header"></div>
+    <div class="preview-scroll" id="preview-list"></div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closePreview()">Abbrechen</button>
+      <button class="modal-btn primary" onclick="confirmPreview()">✓ Laden</button>
+    </div>
+  </div>
 </div>
 
 <!-- BOTTOM BAR -->
@@ -498,6 +714,166 @@ function resetAll() {
   document.querySelectorAll('.pax-row.checked, .pax-row.absent').forEach(r => r.classList.remove('checked','absent'));
   checked = 0; localStorage.removeItem(listKey); update();
 }
+
+/* ── GEMINI SCAN ── */
+let pendingData = null;
+
+function updateSettingsBtn() {
+  const btn = document.getElementById('settings-btn');
+  if (btn) btn.classList.toggle('has-key', !!localStorage.getItem('gemini_api_key'));
+}
+
+function openApiModal() {
+  document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || '';
+  document.getElementById('api-modal').classList.add('open');
+}
+function closeApiModal() {
+  document.getElementById('api-modal').classList.remove('open');
+}
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (key) localStorage.setItem('gemini_api_key', key);
+  else localStorage.removeItem('gemini_api_key');
+  updateSettingsBtn();
+  closeApiModal();
+}
+
+function handleModalBgClick(e, id) {
+  if (e.target.id === id) {
+    document.getElementById(id).classList.remove('open');
+  }
+}
+
+function startScan() {
+  const apiKey = localStorage.getItem('gemini_api_key');
+  if (!apiKey) {
+    openApiModal();
+    return;
+  }
+  document.getElementById('camera-input').click();
+}
+
+async function scanPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  const apiKey = localStorage.getItem('gemini_api_key');
+  if (!apiKey) { openApiModal(); return; }
+
+  const loading = document.getElementById('scan-loading');
+  loading.classList.add('active');
+  document.getElementById('error-box').style.display = 'none';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const mimeType = file.type || 'image/jpeg';
+
+    const prompt = `Analysiere dieses Foto einer Einstiegsliste für einen Busausflug. Extrahiere alle Haltestellen und Fahrgäste.
+
+Gib das Ergebnis NUR als reines JSON zurück (kein Markdown, keine Erklärungen):
+{
+  "reiseziel": "Reiseziel falls erkennbar",
+  "haltestellen": [
+    {
+      "uhrzeit": "HH:MM falls erkennbar",
+      "ort": "Haltestellenname",
+      "fahrgaeste": [
+        { "sitz": "Sitznr.", "name": "Nachname Vorname", "telefon": "Telefonnummer" }
+      ]
+    }
+  ]
+}
+
+Fehlende Felder (uhrzeit, sitz, telefon, reiseziel) komplett weglassen. Nur das JSON ausgeben.`;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
+          generationConfig: { temperature: 0.1 }
+        })
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'API-Fehler ' + res.status);
+    }
+
+    const result = await res.json();
+    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Strip optional markdown code fences
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error('KI-Antwort war kein gültiges JSON. Bitte nochmal versuchen.'); }
+
+    if (!Array.isArray(data.haltestellen) || data.haltestellen.length === 0) {
+      throw new Error('Keine Haltestellen erkannt. Bitte ein deutlicheres Foto aufnehmen.');
+    }
+
+    loading.classList.remove('active');
+    showPreview(data);
+
+  } catch(err) {
+    loading.classList.remove('active');
+    showError('Fehler: ' + err.message);
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = (e) => resolve(e.target.result.split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function showPreview(data) {
+  pendingData = data;
+  const total = data.haltestellen.reduce((s, h) => s + (h.fahrgaeste?.length || 0), 0);
+  document.getElementById('preview-header').textContent =
+    `${total} Person${total !== 1 ? 'en' : ''} an ${data.haltestellen.length} Haltestelle${data.haltestellen.length !== 1 ? 'n' : ''} erkannt:`;
+
+  const list = document.getElementById('preview-list');
+  list.innerHTML = '';
+  data.haltestellen.forEach(stop => {
+    const div = document.createElement('div');
+    div.className = 'preview-stop';
+    const label = [stop.uhrzeit, stop.ort].filter(Boolean).join(' – ');
+    div.innerHTML = `<div class="preview-stop-name">${label}</div>` +
+      (stop.fahrgaeste || []).map(p =>
+        `<div class="preview-person"><span class="preview-seat">${p.sitz || ''}</span><span>${p.name}${p.telefon ? ' · ' + p.telefon : ''}</span></div>`
+      ).join('');
+    list.appendChild(div);
+  });
+
+  document.getElementById('preview-modal').classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('preview-modal').classList.remove('open');
+  pendingData = null;
+}
+
+function confirmPreview() {
+  if (!pendingData) return;
+  const d = pendingData;
+  closePreview();
+  buildList(d);
+}
+
+// Init
+updateSettingsBtn();
+
+/* ── END GEMINI SCAN ── */
 
 function clearList() {
   if (!confirm('Liste entfernen und neue laden?')) return;
