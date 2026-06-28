@@ -539,8 +539,9 @@
       Der Schlüssel wird nur lokal auf diesem Gerät gespeichert.
     </div>
     <input type="text" class="modal-input" id="api-key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
+    <div id="key-test-result" style="font-size:13px;text-align:center;min-height:18px;"></div>
     <div class="modal-btns">
-      <button class="modal-btn secondary" onclick="closeApiModal()">Abbrechen</button>
+      <button class="modal-btn secondary" onclick="testApiKey()">Testen</button>
       <button class="modal-btn primary" onclick="saveApiKey()">Speichern</button>
     </div>
   </div>
@@ -730,6 +731,38 @@ function openApiModal() {
 function closeApiModal() {
   document.getElementById('api-modal').classList.remove('open');
 }
+async function testApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  const out = document.getElementById('key-test-result');
+  if (!key) { out.style.color = 'var(--red)'; out.textContent = 'Bitte zuerst einen Schlüssel eingeben.'; return; }
+  out.style.color = 'var(--muted)'; out.textContent = 'Teste …';
+
+  const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash'];
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'Antworte nur mit dem Wort: OK' }] }] }) }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        out.style.color = 'var(--green)';
+        out.textContent = '✓ Schlüssel funktioniert (' + model + ')';
+        return;
+      }
+      const msg = data.error?.message || '';
+      if (res.status === 400 || msg.includes('API_KEY') || msg.includes('invalid')) {
+        out.style.color = 'var(--red)'; out.textContent = '✗ Ungültiger Schlüssel – bitte nochmal von AI Studio kopieren.'; return;
+      }
+    } catch(e) {
+      out.style.color = 'var(--red)'; out.textContent = '✗ Netzwerkfehler – Internetverbindung prüfen.'; return;
+    }
+  }
+  out.style.color = 'var(--red)';
+  out.textContent = '✗ Kein Modell verfügbar. Schlüssel muss von aistudio.google.com stammen.';
+}
+
 function saveApiKey() {
   const key = document.getElementById('api-key-input').value.trim();
   if (key) localStorage.setItem('gemini_api_key', key);
