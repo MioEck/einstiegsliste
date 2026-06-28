@@ -748,19 +748,24 @@ async function testApiKey() {
       const data = await res.json();
       if (res.ok) {
         out.style.color = 'var(--green)';
-        out.textContent = '✓ Schlüssel funktioniert (' + model + ')';
+        out.textContent = '✓ Funktioniert! (' + model + ')';
         return;
       }
       const msg = data.error?.message || '';
-      if (res.status === 400 || msg.includes('API_KEY') || msg.includes('invalid')) {
-        out.style.color = 'var(--red)'; out.textContent = '✗ Ungültiger Schlüssel – bitte nochmal von AI Studio kopieren.'; return;
+      const code = data.error?.code || res.status;
+      if (res.status === 400 || msg.toLowerCase().includes('api_key') || msg.toLowerCase().includes('invalid')) {
+        out.style.color = 'var(--red)';
+        out.textContent = '✗ Ungültiger Schlüssel (' + code + ')';
+        return;
       }
+      // Show exact error for diagnosis
+      out.style.color = 'var(--red)';
+      out.textContent = '✗ ' + model + ': ' + code + ' – ' + msg.substring(0, 80);
+      return;
     } catch(e) {
-      out.style.color = 'var(--red)'; out.textContent = '✗ Netzwerkfehler – Internetverbindung prüfen.'; return;
+      out.style.color = 'var(--red)'; out.textContent = '✗ Netzwerkfehler: ' + e.message; return;
     }
   }
-  out.style.color = 'var(--red)';
-  out.textContent = '✗ Kein Modell verfügbar. Schlüssel muss von aistudio.google.com stammen.';
 }
 
 function saveApiKey() {
