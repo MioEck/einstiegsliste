@@ -631,6 +631,9 @@ function buildList(data) {
   total = 0; checked = 0;
   listKey = 'rl4_' + (data.reiseziel || '') + (data.haltestellen?.[0]?.uhrzeit || '') + (data.haltestellen?.[0]?.fahrgaeste?.[0]?.name || '');
 
+  // Persist full list so it survives app restarts
+  localStorage.setItem('current_list_data', JSON.stringify(data));
+
   if (data.reiseziel) {
     document.getElementById('trip-name').textContent = data.reiseziel;
     document.getElementById('trip-banner').style.display = 'block';
@@ -959,9 +962,22 @@ updateSettingsBtn();
 
 /* ── END GEMINI SCAN ── */
 
+// Restore list on every app start – never lose data unless user taps "Liste entfernen"
+(function restoreOnStart() {
+  const saved = localStorage.getItem('current_list_data');
+  if (!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    buildList(data);
+  } catch(e) {
+    localStorage.removeItem('current_list_data');
+  }
+})();
+
 function clearList() {
   if (!confirm('Liste entfernen und neue laden?')) return;
   localStorage.removeItem(listKey);
+  localStorage.removeItem('current_list_data');
   total = 0; checked = 0; listKey = '';
   document.getElementById('main').innerHTML = '';
   document.getElementById('trip-banner').style.display = 'none';
