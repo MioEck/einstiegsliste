@@ -805,14 +805,14 @@ Fehlende Felder (uhrzeit, sitz, telefon, reiseziel) komplett weglassen. Nur das 
       const err = await res.json().catch(() => ({}));
       const msg = err.error?.message || '';
       if (res.status === 429 || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
-        throw new Error('Quota überschritten – bitte kurz warten und nochmal versuchen.');
+        throw new Error('Kein Kontingent – bitte einen neuen Schlüssel unter aistudio.google.com holen und im ⚙-Menü eintragen.');
       }
       if (res.status === 400 || msg.includes('API_KEY')) {
         throw new Error('Ungültiger API-Schlüssel. Bitte im ⚙-Menü prüfen.');
       }
       lastErr = res.status;
     }
-    if (!res.ok) throw new Error('Kein verfügbares Modell gefunden (Fehler ' + lastErr + '). Bitte API-Schlüssel von aistudio.google.com verwenden.');
+    if (!res.ok) throw new Error('Kein Modell verfügbar – bitte einen neuen Schlüssel unter aistudio.google.com holen und im ⚙-Menü eintragen.');
 
     const result = await res.json();
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
