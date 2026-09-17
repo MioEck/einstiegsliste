@@ -728,12 +728,15 @@
 <!-- FAHRPLAN -->
 <div id="fahrplan-view">
   <button class="fp-scan-btn" id="fp-scan-btn" onclick="document.getElementById('fp-photo-input').click()">
-    📷 Dokument fotografieren & analysieren
+    📷 Weitere Seite fotografieren & hinzufügen
   </button>
   <input type="file" id="fp-photo-input" accept="image/*" capture="environment" style="display:none" onchange="scanFahrplan(event)">
   <div class="fp-status" id="fp-status"></div>
   <div id="fp-content">
-    <div class="fp-empty">Noch kein Fahrplan geladen.<br>Foto eines Dokuments machen<br>→ Adressen & Zeiten werden erkannt.</div>
+    <div class="fp-empty">Noch kein Fahrplan geladen.<br>Foto eines Dokuments machen<br>→ Adressen & Zeiten werden erkannt.<br>Mehrere Fotos möglich – alles wird gesammelt.</div>
+  </div>
+  <div id="fp-clear-wrap" style="display:none; padding: 0 0 20px; text-align:center;">
+    <button onclick="clearFahrplan()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:8px 18px;border-radius:10px;font-size:13px;cursor:pointer;">✕ Fahrplan leeren</button>
   </div>
 </div>
 
@@ -813,10 +816,13 @@ Fehlende Felder mit null belassen. Nur JSON, kein weiterer Text.`;
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     const data = JSON.parse(text);
     if (!data.haltestellen?.length) throw new Error('Keine Haltestellen erkannt.');
-    saveFahrplan(data);
-    renderFahrplan(data);
+    // Merge with existing stops
+    const existing = JSON.parse(localStorage.getItem('fahrplan_data') || '{"haltestellen":[]}');
+    const merged = { haltestellen: [...existing.haltestellen, ...data.haltestellen] };
+    saveFahrplan(merged);
+    renderFahrplan(merged);
     status.style.color = 'var(--green)';
-    status.textContent = '✓ ' + data.haltestellen.length + ' Haltestellen erkannt';
+    status.textContent = '✓ ' + data.haltestellen.length + ' neu erkannt – gesamt ' + merged.haltestellen.length;
   } catch(err) {
     status.style.color = 'var(--red)';
     status.textContent = '✗ ' + err.message;
@@ -830,20 +836,31 @@ function saveFahrplan(data) {
   localStorage.setItem('fahrplan_data', JSON.stringify(data));
 }
 
+function clearFahrplan() {
+  if (!confirm('Alle Fahrplan-Einträge löschen?')) return;
+  localStorage.removeItem('fahrplan_data');
+  renderFahrplan(null);
+  document.getElementById('fp-status').textContent = '';
+}
+
 function renderFahrplan(data) {
   const container = document.getElementById('fp-content');
+  const clearWrap = document.getElementById('fp-clear-wrap');
   if (!data?.haltestellen?.length) {
-    container.innerHTML = '<div class="fp-empty">Noch kein Fahrplan geladen.<br>Foto eines Dokuments machen<br>→ Adressen & Zeiten werden erkannt.</div>';
+    container.innerHTML = '<div class="fp-empty">Noch kein Fahrplan geladen.<br>Foto eines Dokuments machen<br>→ Adressen & Zeiten werden erkannt.<br>Mehrere Fotos möglich – alles wird gesammelt.</div>';
+    if (clearWrap) clearWrap.style.display = 'none';
     return;
   }
-  container.innerHTML = data.haltestellen.map(h => `
+  if (clearWrap) clearWrap.style.display = 'block';
+  container.innerHTML = data.haltestellen.map((h, i) => `
     <div class="fp-stop">
       <div class="fp-stop-header">
-        ${h.uhrzeit ? `<div class="fp-time">${h.uhrzeit}</div>` : ''}
-        <div>
+        ${h.uhrzeit ? `<div class="fp-time">${h.uhrzeit}</div>` : `<div class="fp-time" style="color:var(--muted);font-size:13px;">${i+1}.</div>`}
+        <div style="flex:1;">
           <div class="fp-place">${h.ort || '–'}</div>
           ${h.notiz ? `<div class="fp-note">${h.notiz}</div>` : ''}
         </div>
+        <button onclick="deleteFpStop(${i})" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;">×</button>
       </div>
       ${h.adresse ? `
       <div class="fp-addr-row">
@@ -852,6 +869,15 @@ function renderFahrplan(data) {
       </div>` : ''}
     </div>
   `).join('');
+}
+
+function deleteFpStop(index) {
+  const saved = localStorage.getItem('fahrplan_data');
+  if (!saved) return;
+  const data = JSON.parse(saved);
+  data.haltestellen.splice(index, 1);
+  saveFahrplan(data);
+  renderFahrplan(data);
 }
 
 function navigate(adresse) {
