@@ -12,17 +12,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c26;
-    --border: rgba(255,255,255,0.07);
-    --text: #f0eff8;
-    --muted: #5a5870;
-    --accent: #7c6af7;
-    --green: #22c97a;
-    --green-bg: rgba(34,201,122,0.08);
-    --red: #f05252;
-    --red-bg: rgba(240,82,82,0.08);
+    --bg: #f4f4f8;
+    --surface: #ffffff;
+    --surface2: #eaeaf0;
+    --border: rgba(0,0,0,0.08);
+    --text: #111118;
+    --muted: #8888a0;
+    --accent: #5b4ee0;
+    --green: #15a85e;
+    --green-bg: rgba(21,168,94,0.09);
+    --red: #d13535;
+    --red-bg: rgba(209,53,53,0.08);
     --brand-red: #e02020;
     --header-h: 68px;
   }
@@ -42,8 +42,8 @@
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
@@ -52,7 +52,7 @@
   /* ── HEADER ── */
   header {
     height: var(--header-h);
-    background: rgba(10,10,15,0.9);
+    background: rgba(244,244,248,0.92);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
@@ -181,7 +181,7 @@
     position: sticky;
     top: var(--header-h);
     z-index: 50;
-    background: rgba(10,10,15,0.92);
+    background: rgba(244,244,248,0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
@@ -280,7 +280,7 @@
   .bottom-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    background: rgba(10,10,15,0.92);
+    background: rgba(244,244,248,0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
