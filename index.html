@@ -596,10 +596,9 @@
 
 <!-- BOTTOM BAR -->
 <div class="bottom-bar" id="bottom-bar" style="display:none">
-  <button class="action-btn" onclick="resetAll()">↩ Reset</button>
   <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
   <span class="absent-info" id="absent-info"></span>
-  <button class="action-btn danger" onclick="clearList()">✕ Liste</button>
+  <button class="action-btn danger" onclick="resetAll()">↩ Reset</button>
 </div>
 
 <script>
@@ -741,9 +740,18 @@ function update() {
 }
 
 function resetAll() {
-  if (!confirm('Alle Häkchen entfernen?')) return;
-  document.querySelectorAll('.pax-row.checked, .pax-row.absent').forEach(r => r.classList.remove('checked','absent'));
-  checked = 0; localStorage.removeItem(listKey); update();
+  if (!confirm('Liste zurücksetzen und neue laden?')) return;
+  localStorage.removeItem(listKey);
+  localStorage.removeItem('current_list_data');
+  total = 0; checked = 0; listKey = '';
+  document.getElementById('main').innerHTML = '';
+  document.getElementById('trip-banner').style.display = 'none';
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('bottom-bar').style.display = 'none';
+  document.getElementById('load-screen').style.display = 'flex';
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('badge').textContent = '–';
+  document.title = 'Einstiegsliste';
 }
 
 /* ── GEMINI SCAN ── */
