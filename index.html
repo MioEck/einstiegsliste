@@ -88,14 +88,14 @@
   }
 
   .load-icon {
-    width: 80px; height: 80px;
+    width: 90px; height: 90px;
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
+    color: var(--text);
   }
 
   .load-title {
@@ -634,7 +634,34 @@
 
 <!-- LOAD SCREEN -->
 <div id="load-screen">
-  <div class="load-icon">📋</div>
+  <div class="load-icon">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" width="52" height="52">
+      <!-- document with checkmark -->
+      <rect x="12" y="8" width="28" height="36" rx="3" stroke="currentColor" stroke-width="3.5" fill="none"/>
+      <line x1="19" y1="20" x2="33" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="19" y1="26" x2="33" y2="26" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="19" y1="32" x2="33" y2="32" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      <polyline points="15,14 18,17 24,11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- person head -->
+      <circle cx="72" cy="22" r="6" stroke="currentColor" stroke-width="3.5" fill="none"/>
+      <!-- stairs -->
+      <polyline points="42,88 42,76 54,76 54,64 66,64 66,52 78,52" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <!-- person body walking up -->
+      <line x1="72" y1="30" x2="68" y2="52" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- arm -->
+      <line x1="68" y1="38" x2="58" y2="44" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <!-- legs -->
+      <line x1="68" y1="52" x2="60" y2="65" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="68" y1="52" x2="76" y2="62" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- luggage -->
+      <rect x="46" y="50" width="14" height="18" rx="2.5" stroke="currentColor" stroke-width="3" fill="none"/>
+      <line x1="50" y1="50" x2="50" y2="47" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="56" y1="50" x2="56" y2="47" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="46" y1="62" x2="60" y2="62" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="48" cy="68" r="2" fill="currentColor"/>
+      <circle cx="58" cy="68" r="2" fill="currentColor"/>
+    </svg>
+  </div>
   <div class="load-title">Liste laden</div>
   <div class="load-sub">Wähle die liste.json Datei aus, die du von Claude bekommen hast.</div>
   <div class="error-box" id="error-box"></div>
@@ -663,8 +690,9 @@
       Der Schlüssel wird nur lokal auf diesem Gerät gespeichert.
     </div>
     <input type="text" class="modal-input" id="api-key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
+    <div id="key-test-result" style="font-size:13px;text-align:center;min-height:18px;"></div>
     <div class="modal-btns">
-      <button class="modal-btn secondary" onclick="closeApiModal()">Abbrechen</button>
+      <button class="modal-btn secondary" onclick="testApiKey()">Testen</button>
       <button class="modal-btn primary" onclick="saveApiKey()">Speichern</button>
     </div>
   </div>
@@ -861,6 +889,9 @@ function buildList(data) {
   total = 0; checked = 0;
   listKey = 'rl4_' + (data.reiseziel || '') + (data.haltestellen?.[0]?.uhrzeit || '') + (data.haltestellen?.[0]?.fahrgaeste?.[0]?.name || '');
 
+  // Persist full list so it survives app restarts
+  localStorage.setItem('current_list_data', JSON.stringify(data));
+
   if (data.reiseziel) {
     document.getElementById('trip-name').textContent = data.reiseziel;
     document.getElementById('trip-banner').style.display = 'block';
@@ -997,6 +1028,49 @@ function openApiModal() {
 function closeApiModal() {
   document.getElementById('api-modal').classList.remove('open');
 }
+async function getAvailableVisionModel(key) {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${key}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  const visionModels = (data.models || [])
+    .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+    .map(m => m.name.replace('models/', ''));
+  // Prefer flash models for speed
+  return visionModels.find(m => m.includes('flash')) || visionModels[0] || null;
+}
+
+async function testApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  const out = document.getElementById('key-test-result');
+  if (!key) { out.style.color = 'var(--red)'; out.textContent = 'Bitte zuerst einen Schlüssel eingeben.'; return; }
+  out.style.color = 'var(--muted)'; out.textContent = 'Suche verfügbare Modelle …';
+
+  try {
+    const model = await getAvailableVisionModel(key);
+    if (!model) {
+      out.style.color = 'var(--red)'; out.textContent = '✗ Keine Modelle gefunden – Schlüssel ungültig?'; return;
+    }
+    out.textContent = 'Teste ' + model + ' …';
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: 'OK' }] }] }) }
+    );
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('gemini_model', model);
+      out.style.color = 'var(--green)';
+      out.textContent = '✓ Funktioniert! (' + model + ')';
+    } else {
+      const msg = data.error?.message || '';
+      out.style.color = 'var(--red)';
+      out.textContent = '✗ ' + (data.error?.code || res.status) + ': ' + msg.substring(0, 80);
+    }
+  } catch(e) {
+    out.style.color = 'var(--red)'; out.textContent = '✗ Netzwerkfehler: ' + e.message;
+  }
+}
+
 function saveApiKey() {
   const key = document.getElementById('api-key-input').value.trim();
   if (key) localStorage.setItem('gemini_api_key', key);
@@ -1054,21 +1128,24 @@ Gib das Ergebnis NUR als reines JSON zurück (kein Markdown, keine Erklärungen)
 
 Fehlende Felder (uhrzeit, sitz, telefon, reiseziel) komplett weglassen. Nur das JSON ausgeben.`;
 
-    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash'];
-    let res, lastErr;
-    for (const model of models) {
-      res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
-            generationConfig: { temperature: 0.1 }
-          })
-        }
-      );
-      if (res.ok) break;
+    let model = localStorage.getItem('gemini_model');
+    if (!model) {
+      model = await getAvailableVisionModel(apiKey);
+      if (!model) throw new Error('Kein verfügbares Modell gefunden. Bitte ⚙ → Testen ausführen.');
+      localStorage.setItem('gemini_model', model);
+    }
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
+          generationConfig: { temperature: 0.1 }
+        })
+      }
+    );
+    if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const msg = err.error?.message || '';
       if (res.status === 429 || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
@@ -1077,9 +1154,9 @@ Fehlende Felder (uhrzeit, sitz, telefon, reiseziel) komplett weglassen. Nur das 
       if (res.status === 400 || msg.includes('API_KEY')) {
         throw new Error('Ungültiger API-Schlüssel. Bitte im ⚙-Menü prüfen.');
       }
-      lastErr = res.status;
+      localStorage.removeItem('gemini_model');
+      throw new Error('API-Fehler ' + res.status + ': ' + msg.substring(0, 80));
     }
-    if (!res.ok) throw new Error('Kein verfügbares Modell gefunden (Fehler ' + lastErr + '). Bitte API-Schlüssel von aistudio.google.com verwenden.');
 
     const result = await res.json();
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
