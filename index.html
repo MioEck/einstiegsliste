@@ -869,8 +869,9 @@ function renderFahrplan(data) {
       <div class="fp-addr-row">
         <div class="fp-addr-text">${h.adresse}</div>
         <div class="fp-nav-btns">
-          <button class="fp-nav-btn primary" onclick="navigateApp('sygic','${h.adresse.replace(/'/g, "\\'")}',this)">🚛 Sygic</button>
-          <button class="fp-nav-btn" onclick="navigateApp('tomtom','${h.adresse.replace(/'/g, "\\'")}',this)">🗺 TomTom</button>
+          <button class="fp-nav-btn primary" onclick="navigateApp('sygic',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🚛 Sygic</button>
+          <button class="fp-nav-btn" onclick="navigateApp('tomtom',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🗺 TomTom</button>
+          <button class="fp-nav-btn" onclick="navigateApp('tomtom',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🗺 TomTom</button>
         </div>
       </div>` : ''}
     </div>
@@ -887,97 +888,79 @@ function deleteFpStop(index) {
 }
 
 function expandAddr(a) {
-  return a
-    .replace(/\bStr\.\s*/gi, 'Straße ')
-    .replace(/\bPl\.\s*/gi, 'Platz ')
-    .replace(/\bHbf\b/gi, 'Hauptbahnhof')
-    .replace(/\bBhf\b/gi, 'Bahnhof')
-    .replace(/\bAve?\.\s*/gi, 'Allee ')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+  return (a || '')
+    .replace(/\bStr\.\s*/gi, 'Straße ').replace(/\bPl\.\s*/gi, 'Platz ')
+    .replace(/\bHbf\b/gi, 'Hauptbahnhof').replace(/\bBhf\b/gi, 'Bahnhof')
+    .replace(/\s{2,}/g, ' ').trim();
 }
 
-function parseAddr(adresse) {
-  const exp = expandAddr(adresse);
-  const parts = exp.split(',').map(p => p.trim());
-  const streetPart = parts[0] || '';
-  const cityPart = (parts.slice(1).join(' ')).trim();
-  const sm = streetPart.match(/^(.+?)\s+(\d+\w*)$/);
-  const street = sm ? sm[1].trim() : streetPart;
-  const housenumber = sm ? sm[2] : '';
-  const cm = cityPart.match(/^(\d{5})\s+(.+)$/);
-  const postalcode = cm ? cm[1] : '';
-  const city = cm ? cm[2] : cityPart;
-  return { exp, street, housenumber, postalcode, city };
-}
+async function geocode(name, adresse) {
+  const addr = expandAddr(adresse);
+  // Build list of queries – try most specific first
+  const queries = [];
+  if (name && adresse) queries.push(name + ', ' + addr);
+  queries.push(addr);
+  if (name) queries.push(name);
+  // Also try without house number
+  const noNr = addr.replace(/,?\s*\d+\w?\s*,/, ',').replace(/\s+\d+\w?\s*$/, '').trim();
+  if (noNr !== addr) queries.push(name ? name + ', ' + noNr : noNr);
 
-async function geocodeForTomTom(adresse) {
-  const { exp, street, housenumber, postalcode, city } = parseAddr(adresse);
-
-  // Try 1: Nominatim full text
-  let r = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(exp) + '&format=json&limit=1',
-    { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste/1.0' } });
-  let d = await r.json();
-  if (d.length) return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
-
-  // Try 2: Nominatim structured
-  const p = new URLSearchParams({ format: 'json', limit: '1', country: 'de', 'accept-language': 'de' });
-  if (street) p.set('street', (housenumber + ' ' + street).trim());
-  if (city) p.set('city', city);
-  if (postalcode) p.set('postalcode', postalcode);
-  r = await fetch('https://nominatim.openstreetmap.org/search?' + p,
-    { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste/1.0' } });
-  d = await r.json();
-  if (d.length) return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
-
-  // Try 3: Photon (komoot) – often better for German rural addresses
-  r = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(exp) + '&limit=1&lang=de');
-  d = await r.json();
-  if (d.features?.length) {
-    const [lon, lat] = d.features[0].geometry.coordinates;
-    return { lat, lon };
+  for (const q of queries) {
+    // Nominatim
+    try {
+      const r = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=1',
+        { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste/1.0' } });
+      const d = await r.json();
+      if (d?.length) return { lat: +d[0].lat, lon: +d[0].lon };
+    } catch(e) {}
+    // Photon (komoot)
+    try {
+      const r = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=1&lang=de');
+      const d = await r.json();
+      if (d?.features?.length) {
+        const [lon, lat] = d.features[0].geometry.coordinates;
+        return { lat, lon };
+      }
+    } catch(e) {}
   }
-
-  return null; // no result – will fall back to Google Maps
+  return null;
 }
 
-async function navigateApp(app, adresse, btn) {
-  const origText = btn.innerHTML;
-  btn.textContent = '⏳';
-  btn.disabled = true;
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  const { exp, street, housenumber, postalcode, city } = parseAddr(adresse);
+async function navigateApp(app, name, adresse, btn) {
+  const origHTML = btn.innerHTML;
+  btn.textContent = '⏳'; btn.disabled = true;
 
   try {
-    if (app === 'sygic') {
-      // Sygic address URL – no geocoding needed
-      const params = new URLSearchParams({ country: 'de' });
-      if (city) params.set('city', city);
-      if (street) params.set('street', street);
-      if (housenumber) params.set('housenumber', housenumber);
-      if (postalcode) params.set('zip', postalcode);
-      // iOS: com.sygic.aura, Android: com.sygic.truck
-      const scheme = isIOS ? 'com.sygic.aura' : 'com.sygic.truck';
-      window.location.href = `${scheme}://address?${params}`;
-
-    } else if (app === 'tomtom') {
-      const coords = await geocodeForTomTom(adresse);
-      if (coords) {
-        window.location.href = `tomtomgo://x-callback-url/navigate?destination=${coords.lat},${coords.lon}`;
-        // Fallback to Google Maps after 2s if app not installed
-        setTimeout(() => {
-          window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lon}`, '_blank');
-        }, 2000);
-      } else {
-        // No coords found – open Google Maps with address text
-        window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(exp), '_blank');
-      }
+    const coords = await geocode(name, adresse);
+    if (!coords) {
+      // No geocoding result – fall back to Google Maps text search
+      window.open('https://maps.google.com/maps?q=' + encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse)), '_blank');
+      return;
     }
-  } catch(e) {
-    window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(exp), '_blank');
+    const { lat, lon } = coords;
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (app === 'sygic') {
+      // Try com.sygic.aura (regular + truck on iOS), com.sygic.truck (Android)
+      if (isIOS) {
+        window.location.href = `com.sygic.aura://drive|${lat}|${lon}|14`;
+      } else {
+        window.location.href = `intent://drive|${lat}|${lon}|14#Intent;scheme=com.sygic.truck;package=com.sygic.truck;end`;
+      }
+    } else {
+      // TomTom GO
+      if (isIOS) {
+        window.location.href = `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
+      } else {
+        window.location.href = `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
+      }
+      // Reliable fallback after 2.5s in case app not installed
+      setTimeout(() => {
+        window.open(`https://maps.google.com/maps?daddr=${lat},${lon}`, '_blank');
+      }, 2500);
+    }
   } finally {
-    btn.innerHTML = origText;
-    btn.disabled = false;
+    btn.innerHTML = origHTML; btn.disabled = false;
   }
 }
 
