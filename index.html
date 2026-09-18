@@ -896,13 +896,33 @@ function navigate(adresse) {
 }
 
 async function geocodeAddress(adresse) {
-  const res = await fetch(
-    'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(adresse) + '&format=json&limit=1&countrycodes=de,at,ch',
-    { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste-App' } }
-  );
-  const data = await res.json();
-  if (!data.length) throw new Error('Adresse nicht gefunden');
-  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  // Expand common German abbreviations for better geocoding results
+  function expand(a) {
+    return a
+      .replace(/\bStr\.\s*/gi, 'Straße ')
+      .replace(/\bStraße\s+(\d)/gi, 'Straße $1')
+      .replace(/\bGasse\b/gi, 'Gasse')
+      .replace(/\bPl\.\s*/gi, 'Platz ')
+      .replace(/\bHbf\b/gi, 'Hauptbahnhof')
+      .replace(/\bBhf\b/gi, 'Bahnhof')
+      .replace(/\bAve?\.\s*/gi, 'Allee ')
+      .trim();
+  }
+
+  const queries = [expand(adresse), adresse];
+  // Also try without house number as fallback
+  const noNumber = expand(adresse).replace(/\s+\d+[a-z]?\s*,/, ',');
+  if (noNumber !== expand(adresse)) queries.push(noNumber);
+
+  for (const q of queries) {
+    const res = await fetch(
+      'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=1',
+      { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste-App/1.0' } }
+    );
+    const data = await res.json();
+    if (data.length) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  }
+  throw new Error('Adresse nicht gefunden:\n' + adresse);
 }
 
 async function navigateApp(app, adresse, btn) {
