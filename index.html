@@ -871,7 +871,7 @@ function renderFahrplan(data) {
         <div class="fp-nav-btns">
           <button class="fp-nav-btn primary" onclick="navigateApp('sygic',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🚛 Sygic</button>
           <button class="fp-nav-btn" onclick="navigateApp('tomtom',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🗺 TomTom</button>
-          <button class="fp-nav-btn" onclick="navigateApp('tomtom',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🗺 TomTom</button>
+          <button class="fp-nav-btn" onclick="openInMaps(${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)})">📍 Karte</button>
         </div>
       </div>` : ''}
     </div>
@@ -928,48 +928,58 @@ async function geocode(name, adresse) {
 
 async function navigateApp(app, name, adresse, btn) {
   const origHTML = btn.innerHTML;
-  btn.textContent = '⏳ Suche…'; btn.disabled = true;
+  const row = btn.closest('.fp-stop');
+  let info = row?.querySelector('.fp-navinfo');
+  if (!info && row) {
+    info = document.createElement('div');
+    info.className = 'fp-navinfo';
+    info.style.cssText = 'font-size:11px;color:var(--muted);padding:0 16px 10px;';
+    row.appendChild(info);
+  }
+  const say = t => { if (info) info.textContent = t; };
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const restore = () => { btn.innerHTML = origHTML; btn.disabled = false; };
+
+  btn.textContent = '⏳'; btn.disabled = true;
+  say('Suche Koordinaten …');
 
   try {
     const coords = await geocode(name, adresse);
+
     if (!coords) {
-      // Fallback: Android geo: URI öffnet App-Auswahl; iOS Google Maps
+      say('Koordinaten nicht gefunden – öffne Kartenauswahl');
       const q = encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse));
-      window.location.href = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-        ? 'https://maps.google.com/maps?q=' + q
-        : 'geo:0,0?q=' + q;
+      window.location.href = isAndroid ? 'geo:0,0?q=' + q : 'https://maps.google.com/maps?q=' + q;
+      restore();
       return;
     }
-    const { lat, lon } = coords;
+
+    const lat = coords.lat.toFixed(6), lon = coords.lon.toFixed(6);
+    say('Ziel: ' + lat + ', ' + lon);
 
     if (app === 'sygic') {
-      // Android: Intent mit Paketname com.sygic.truck
-      // iOS: com.sygic.aura URL-Schema
-      if (/Android/i.test(navigator.userAgent)) {
-        window.location.href =
-          `intent://coordinate?lat=${lat}&lon=${lon}&zoom=14&drive=1` +
-          `#Intent;scheme=com.sygic.truck;package=com.sygic.truck;` +
-          `S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.sygic.truck;end`;
-      } else {
-        window.location.href = `com.sygic.aura://drive|${lat}|${lon}|14`;
-      }
-
+      // Sygic format: coordinate|LONGITUDE|LATITUDE|drive  (longitude comes FIRST)
+      const path = `coordinate|${lon}|${lat}|drive`;
+      window.location.href = isAndroid
+        ? `intent://${path}#Intent;scheme=com.sygic.truck;package=com.sygic.truck;end`
+        : `com.sygic.aura://${path}`;
     } else {
-      // TomTom GO – Android: Intent mit Paketname
-      if (/Android/i.test(navigator.userAgent)) {
-        window.location.href =
-          `intent://x-callback-url/navigate?destination=${lat},${lon}` +
-          `#Intent;scheme=tomtomgo;package=com.tomtom.gplay.speedcams;` +
-          `S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.tomtom.gplay.speedcams;end`;
-      } else {
-        window.location.href = `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
-      }
+      window.location.href = isAndroid
+        ? `intent://x-callback-url/navigate?destination=${lat},${lon}#Intent;scheme=tomtomgo;package=com.tomtom.gplay.navapp;end`
+        : `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
     }
+    restore();
   } catch(e) {
-    window.location.href = 'geo:0,0?q=' + encodeURIComponent(expandAddr(adresse));
-  } finally {
-    setTimeout(() => { btn.innerHTML = origHTML; btn.disabled = false; }, 1500);
+    say('Fehler: ' + e.message);
+    restore();
   }
+}
+
+function openInMaps(name, adresse) {
+  const q = encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse));
+  window.location.href = /Android/i.test(navigator.userAgent)
+    ? 'geo:0,0?q=' + q
+    : 'https://maps.google.com/maps?q=' + q;
 }
 
 
