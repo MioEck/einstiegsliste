@@ -914,10 +914,11 @@ async function navigateApp(app, adresse, btn) {
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
 
     if (app === 'sygic') {
-      // Sygic Truck: iOS uses com.sygic.aura://, Android uses intent scheme
+      // Sygic navigation format: drive|LAT|LON|ZOOM (pipe-separated)
+      // com.sygic.aura:// works for both Sygic and Sygic Truck on iOS
       const url = isIOS
-        ? `com.sygic.aura://coordinate?lat=${lat}&lon=${lon}&zoom=14&drive=1`
-        : `intent://coordinate?lat=${lat}&lon=${lon}&zoom=14&drive=1#Intent;scheme=com.sygic.truck;package=com.sygic.truck;end`;
+        ? `com.sygic.aura://drive|${lat}|${lon}|14`
+        : `intent://drive|${lat}|${lon}|14#Intent;scheme=com.sygic.truck;package=com.sygic.truck;end`;
       window.location.href = url;
     } else if (app === 'tomtom') {
       // TomTom GO Navigation
