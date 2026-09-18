@@ -928,39 +928,47 @@ async function geocode(name, adresse) {
 
 async function navigateApp(app, name, adresse, btn) {
   const origHTML = btn.innerHTML;
-  btn.textContent = '⏳'; btn.disabled = true;
+  btn.textContent = '⏳ Suche…'; btn.disabled = true;
 
   try {
     const coords = await geocode(name, adresse);
     if (!coords) {
-      // No geocoding result – fall back to Google Maps text search
-      window.open('https://maps.google.com/maps?q=' + encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse)), '_blank');
+      // Fallback: Android geo: URI öffnet App-Auswahl; iOS Google Maps
+      const q = encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse));
+      window.location.href = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+        ? 'https://maps.google.com/maps?q=' + q
+        : 'geo:0,0?q=' + q;
       return;
     }
     const { lat, lon } = coords;
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (app === 'sygic') {
-      // Try com.sygic.aura (regular + truck on iOS), com.sygic.truck (Android)
-      if (isIOS) {
+      // Android: Intent mit Paketname com.sygic.truck
+      // iOS: com.sygic.aura URL-Schema
+      if (/Android/i.test(navigator.userAgent)) {
+        window.location.href =
+          `intent://coordinate?lat=${lat}&lon=${lon}&zoom=14&drive=1` +
+          `#Intent;scheme=com.sygic.truck;package=com.sygic.truck;` +
+          `S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.sygic.truck;end`;
+      } else {
         window.location.href = `com.sygic.aura://drive|${lat}|${lon}|14`;
-      } else {
-        window.location.href = `intent://drive|${lat}|${lon}|14#Intent;scheme=com.sygic.truck;package=com.sygic.truck;end`;
       }
+
     } else {
-      // TomTom GO
-      if (isIOS) {
-        window.location.href = `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
+      // TomTom GO – Android: Intent mit Paketname
+      if (/Android/i.test(navigator.userAgent)) {
+        window.location.href =
+          `intent://x-callback-url/navigate?destination=${lat},${lon}` +
+          `#Intent;scheme=tomtomgo;package=com.tomtom.gplay.speedcams;` +
+          `S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.tomtom.gplay.speedcams;end`;
       } else {
         window.location.href = `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
       }
-      // Reliable fallback after 2.5s in case app not installed
-      setTimeout(() => {
-        window.open(`https://maps.google.com/maps?daddr=${lat},${lon}`, '_blank');
-      }, 2500);
     }
+  } catch(e) {
+    window.location.href = 'geo:0,0?q=' + encodeURIComponent(expandAddr(adresse));
   } finally {
-    btn.innerHTML = origHTML; btn.disabled = false;
+    setTimeout(() => { btn.innerHTML = origHTML; btn.disabled = false; }, 1500);
   }
 }
 
