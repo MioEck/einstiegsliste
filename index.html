@@ -876,7 +876,7 @@ function renderFahrplan(data) {
         <div class="fp-nav-btns">
           <button class="fp-nav-btn primary" onclick="navigateApp('sygic',${i},this)">🚛 Sygic</button>
           <button class="fp-nav-btn" onclick="navigateApp('tomtom',${i},this)">🗺 TomTom</button>
-          <button class="fp-nav-btn" onclick="openInMaps(${i})">📍 Karte</button>
+          <button class="fp-nav-btn" onclick="openInMaps(${i},this)">📍 Karte</button>
         </div>
       </div>` : ''}
     </div>
@@ -970,18 +970,21 @@ async function navigateApp(app, index, btn) {
     }
 
     const lat = coords.lat.toFixed(6), lon = coords.lon.toFixed(6);
+    const label = encodeURIComponent(name || adresse || 'Ziel');
     say('Ziel: ' + lat + ', ' + lon);
 
-    if (app === 'sygic') {
-      // Sygic format: coordinate|LONGITUDE|LATITUDE|drive  (longitude comes FIRST)
-      const path = `coordinate|${lon}|${lat}|drive`;
-      window.location.href = isAndroid
-        ? `intent://${path}#Intent;scheme=com.sygic.truck;package=com.sygic.truck;end`
-        : `com.sygic.aura://${path}`;
+    if (isAndroid) {
+      // geo: is the Android standard both apps understand.
+      // Pipes are illegal in an intent:// host, which is why the old
+      // Sygic URL was rejected outright.
+      const pkg = app === 'sygic' ? 'com.sygic.truck' : 'com.tomtom.gplay.navapp';
+      window.location.href =
+        `intent://${lat},${lon}?q=${lat},${lon}(${label})` +
+        `#Intent;scheme=geo;package=${pkg};end`;
+    } else if (app === 'sygic') {
+      window.location.href = `com.sygic.aura://coordinate|${lon}|${lat}|drive`;
     } else {
-      window.location.href = isAndroid
-        ? `intent://x-callback-url/navigate?destination=${lat},${lon}#Intent;scheme=tomtomgo;package=com.tomtom.gplay.navapp;end`
-        : `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
+      window.location.href = `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
     }
     restore();
   } catch(e) {
@@ -990,13 +993,27 @@ async function navigateApp(app, index, btn) {
   }
 }
 
-function openInMaps(index) {
+async function openInMaps(index, btn) {
   const stop = getStop(index);
   if (!stop) return;
-  const q = encodeURIComponent(((stop.ort ? stop.ort + ' ' : '') + expandAddr(stop.adresse || '')).trim());
-  window.location.href = /Android/i.test(navigator.userAgent)
-    ? 'geo:0,0?q=' + q
-    : 'https://maps.google.com/maps?q=' + q;
+  const name = stop.ort || '', adresse = stop.adresse || '';
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+  const coords = await geocode(name, adresse);
+  if (btn) { btn.innerHTML = origHTML; btn.disabled = false; }
+
+  if (/Android/i.test(navigator.userAgent)) {
+    // Real coordinates make Sygic/TomTom offer themselves in the app chooser;
+    // a text-only geo: query does not.
+    window.location.href = coords
+      ? `geo:${coords.lat.toFixed(6)},${coords.lon.toFixed(6)}?q=${coords.lat.toFixed(6)},${coords.lon.toFixed(6)}(${encodeURIComponent(name || 'Ziel')})`
+      : 'geo:0,0?q=' + encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse));
+  } else {
+    window.location.href = coords
+      ? `https://maps.google.com/maps?q=${coords.lat},${coords.lon}`
+      : 'https://maps.google.com/maps?q=' + encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse));
+  }
 }
 
 
