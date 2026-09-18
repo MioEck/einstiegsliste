@@ -886,75 +886,101 @@ function deleteFpStop(index) {
   renderFahrplan(data);
 }
 
-function navigate(adresse) {
-  const encoded = encodeURIComponent(adresse);
-  // Try to open native maps app (works on iOS & Android)
-  const url = /iPhone|iPad|iPod/.test(navigator.userAgent)
-    ? `maps://maps.apple.com/?q=${encoded}`
-    : `https://www.google.com/maps/search/?api=1&query=${encoded}`;
-  window.open(url, '_blank');
+function expandAddr(a) {
+  return a
+    .replace(/\bStr\.\s*/gi, 'Straße ')
+    .replace(/\bPl\.\s*/gi, 'Platz ')
+    .replace(/\bHbf\b/gi, 'Hauptbahnhof')
+    .replace(/\bBhf\b/gi, 'Bahnhof')
+    .replace(/\bAve?\.\s*/gi, 'Allee ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
-async function geocodeAddress(adresse) {
-  // Expand common German abbreviations for better geocoding results
-  function expand(a) {
-    return a
-      .replace(/\bStr\.\s*/gi, 'Straße ')
-      .replace(/\bStraße\s+(\d)/gi, 'Straße $1')
-      .replace(/\bGasse\b/gi, 'Gasse')
-      .replace(/\bPl\.\s*/gi, 'Platz ')
-      .replace(/\bHbf\b/gi, 'Hauptbahnhof')
-      .replace(/\bBhf\b/gi, 'Bahnhof')
-      .replace(/\bAve?\.\s*/gi, 'Allee ')
-      .trim();
+function parseAddr(adresse) {
+  const exp = expandAddr(adresse);
+  const parts = exp.split(',').map(p => p.trim());
+  const streetPart = parts[0] || '';
+  const cityPart = (parts.slice(1).join(' ')).trim();
+  const sm = streetPart.match(/^(.+?)\s+(\d+\w*)$/);
+  const street = sm ? sm[1].trim() : streetPart;
+  const housenumber = sm ? sm[2] : '';
+  const cm = cityPart.match(/^(\d{5})\s+(.+)$/);
+  const postalcode = cm ? cm[1] : '';
+  const city = cm ? cm[2] : cityPart;
+  return { exp, street, housenumber, postalcode, city };
+}
+
+async function geocodeForTomTom(adresse) {
+  const { exp, street, housenumber, postalcode, city } = parseAddr(adresse);
+
+  // Try 1: Nominatim full text
+  let r = await fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(exp) + '&format=json&limit=1',
+    { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste/1.0' } });
+  let d = await r.json();
+  if (d.length) return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
+
+  // Try 2: Nominatim structured
+  const p = new URLSearchParams({ format: 'json', limit: '1', country: 'de', 'accept-language': 'de' });
+  if (street) p.set('street', (housenumber + ' ' + street).trim());
+  if (city) p.set('city', city);
+  if (postalcode) p.set('postalcode', postalcode);
+  r = await fetch('https://nominatim.openstreetmap.org/search?' + p,
+    { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste/1.0' } });
+  d = await r.json();
+  if (d.length) return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
+
+  // Try 3: Photon (komoot) – often better for German rural addresses
+  r = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(exp) + '&limit=1&lang=de');
+  d = await r.json();
+  if (d.features?.length) {
+    const [lon, lat] = d.features[0].geometry.coordinates;
+    return { lat, lon };
   }
 
-  const queries = [expand(adresse), adresse];
-  // Also try without house number as fallback
-  const noNumber = expand(adresse).replace(/\s+\d+[a-z]?\s*,/, ',');
-  if (noNumber !== expand(adresse)) queries.push(noNumber);
-
-  for (const q of queries) {
-    const res = await fetch(
-      'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=1',
-      { headers: { 'Accept-Language': 'de', 'User-Agent': 'Einstiegsliste-App/1.0' } }
-    );
-    const data = await res.json();
-    if (data.length) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-  }
-  throw new Error('Adresse nicht gefunden:\n' + adresse);
+  return null; // no result – will fall back to Google Maps
 }
 
 async function navigateApp(app, adresse, btn) {
   const origText = btn.innerHTML;
   btn.textContent = '⏳';
   btn.disabled = true;
-  try {
-    const { lat, lon } = await geocodeAddress(adresse);
-    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const { exp, street, housenumber, postalcode, city } = parseAddr(adresse);
 
+  try {
     if (app === 'sygic') {
-      // Sygic navigation format: drive|LAT|LON|ZOOM (pipe-separated)
-      // com.sygic.aura:// works for both Sygic and Sygic Truck on iOS
-      const url = isIOS
-        ? `com.sygic.aura://drive|${lat}|${lon}|14`
-        : `intent://drive|${lat}|${lon}|14#Intent;scheme=com.sygic.truck;package=com.sygic.truck;end`;
-      window.location.href = url;
+      // Sygic address URL – no geocoding needed
+      const params = new URLSearchParams({ country: 'de' });
+      if (city) params.set('city', city);
+      if (street) params.set('street', street);
+      if (housenumber) params.set('housenumber', housenumber);
+      if (postalcode) params.set('zip', postalcode);
+      // iOS: com.sygic.aura, Android: com.sygic.truck
+      const scheme = isIOS ? 'com.sygic.aura' : 'com.sygic.truck';
+      window.location.href = `${scheme}://address?${params}`;
+
     } else if (app === 'tomtom') {
-      // TomTom GO Navigation
-      window.location.href = `tomtomgo://x-callback-url/navigate?destination=${lat},${lon}`;
-      // Fallback nach 2s wenn App nicht installiert
-      setTimeout(() => {
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`, '_blank');
-      }, 2000);
+      const coords = await geocodeForTomTom(adresse);
+      if (coords) {
+        window.location.href = `tomtomgo://x-callback-url/navigate?destination=${coords.lat},${coords.lon}`;
+        // Fallback to Google Maps after 2s if app not installed
+        setTimeout(() => {
+          window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lon}`, '_blank');
+        }, 2000);
+      } else {
+        // No coords found – open Google Maps with address text
+        window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(exp), '_blank');
+      }
     }
   } catch(e) {
-    alert('Adresse nicht gefunden:\n' + adresse);
+    window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(exp), '_blank');
   } finally {
     btn.innerHTML = origText;
     btn.disabled = false;
   }
 }
+
 
 function loadFile(e) {
   const file = e.target.files[0];
