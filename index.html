@@ -846,6 +846,11 @@ function clearFahrplan() {
   document.getElementById('fp-status').textContent = '';
 }
 
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
 function renderFahrplan(data) {
   const container = document.getElementById('fp-content');
   const clearWrap = document.getElementById('fp-clear-wrap');
@@ -858,24 +863,30 @@ function renderFahrplan(data) {
   container.innerHTML = data.haltestellen.map((h, i) => `
     <div class="fp-stop">
       <div class="fp-stop-header">
-        ${h.uhrzeit ? `<div class="fp-time">${h.uhrzeit}</div>` : `<div class="fp-time" style="color:var(--muted);font-size:13px;">${i+1}.</div>`}
+        ${h.uhrzeit ? `<div class="fp-time">${esc(h.uhrzeit)}</div>` : `<div class="fp-time" style="color:var(--muted);font-size:13px;">${i+1}.</div>`}
         <div style="flex:1;">
-          <div class="fp-place">${h.ort || '–'}</div>
-          ${h.notiz ? `<div class="fp-note">${h.notiz}</div>` : ''}
+          <div class="fp-place">${esc(h.ort) || '–'}</div>
+          ${h.notiz ? `<div class="fp-note">${esc(h.notiz)}</div>` : ''}
         </div>
         <button onclick="deleteFpStop(${i})" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;">×</button>
       </div>
       ${h.adresse ? `
       <div class="fp-addr-row">
-        <div class="fp-addr-text">${h.adresse}</div>
+        <div class="fp-addr-text">${esc(h.adresse)}</div>
         <div class="fp-nav-btns">
-          <button class="fp-nav-btn primary" onclick="navigateApp('sygic',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🚛 Sygic</button>
-          <button class="fp-nav-btn" onclick="navigateApp('tomtom',${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)},this)">🗺 TomTom</button>
-          <button class="fp-nav-btn" onclick="openInMaps(${JSON.stringify(h.ort||'')},${JSON.stringify(h.adresse)})">📍 Karte</button>
+          <button class="fp-nav-btn primary" onclick="navigateApp('sygic',${i},this)">🚛 Sygic</button>
+          <button class="fp-nav-btn" onclick="navigateApp('tomtom',${i},this)">🗺 TomTom</button>
+          <button class="fp-nav-btn" onclick="openInMaps(${i})">📍 Karte</button>
         </div>
       </div>` : ''}
     </div>
   `).join('');
+}
+
+function getStop(index) {
+  const saved = localStorage.getItem('fahrplan_data');
+  if (!saved) return null;
+  try { return JSON.parse(saved).haltestellen[index] || null; } catch(e) { return null; }
 }
 
 function deleteFpStop(index) {
@@ -926,7 +937,11 @@ async function geocode(name, adresse) {
   return null;
 }
 
-async function navigateApp(app, name, adresse, btn) {
+async function navigateApp(app, index, btn) {
+  const stop = getStop(index);
+  if (!stop) return;
+  const name = stop.ort || '', adresse = stop.adresse || '';
+
   const origHTML = btn.innerHTML;
   const row = btn.closest('.fp-stop');
   let info = row?.querySelector('.fp-navinfo');
@@ -975,8 +990,10 @@ async function navigateApp(app, name, adresse, btn) {
   }
 }
 
-function openInMaps(name, adresse) {
-  const q = encodeURIComponent((name ? name + ' ' : '') + expandAddr(adresse));
+function openInMaps(index) {
+  const stop = getStop(index);
+  if (!stop) return;
+  const q = encodeURIComponent(((stop.ort ? stop.ort + ' ' : '') + expandAddr(stop.adresse || '')).trim());
   window.location.href = /Android/i.test(navigator.userAgent)
     ? 'geo:0,0?q=' + q
     : 'https://maps.google.com/maps?q=' + q;
