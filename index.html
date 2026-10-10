@@ -704,7 +704,7 @@
 <!-- SCAN LOADING -->
 <div class="scan-loading" id="scan-loading">
   <div class="scan-spinner"></div>
-  <div class="scan-loading-text">KI analysiert Foto …</div>
+  <div class="scan-loading-text" id="scan-loading-text">KI analysiert Foto …</div>
 </div>
 
 <!-- PREVIEW MODAL -->
@@ -798,23 +798,10 @@ Gib das Ergebnis als JSON zurück, exakt in diesem Format:
 }
 Fehlende Felder mit null belassen. Nur JSON, kein weiterer Text.`;
 
-    let model = localStorage.getItem('gemini_model');
-    if (!model) {
-      model = await getAvailableVisionModel(apiKey);
-      if (!model) throw new Error('Kein Modell gefunden – bitte ⚙ → Testen ausführen.');
-      localStorage.setItem('gemini_model', model);
-    }
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }], generationConfig: { temperature: 0.1 } }) }
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error('API-Fehler ' + res.status + ': ' + (err.error?.message || ''));
-    }
-    const result = await res.json();
+    const result = await callGemini(apiKey, prompt, base64, mimeType, t => {
+      status.style.color = 'var(--muted)';
+      status.textContent = t;
+    });
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     const data = JSON.parse(text);
@@ -1182,6 +1169,55 @@ function openApiModal() {
 function closeApiModal() {
   document.getElementById('api-modal').classList.remove('open');
 }
+// Shared Gemini call with retry on 503 (model overloaded) and 429 (rate limit).
+// onRetry lets the caller show progress; returns the parsed JSON response.
+async function callGemini(apiKey, prompt, base64, mimeType, onRetry) {
+  let model = localStorage.getItem('gemini_model');
+  if (!model) {
+    model = await getAvailableVisionModel(apiKey);
+    if (!model) throw new Error('Kein verfügbares Modell gefunden. Bitte ⚙ → Testen ausführen.');
+    localStorage.setItem('gemini_model', model);
+  }
+
+  const MAX = 4;
+  for (let attempt = 1; attempt <= MAX; attempt++) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
+          generationConfig: { temperature: 0.1 }
+        })
+      }
+    );
+    if (res.ok) return await res.json();
+
+    const err = await res.json().catch(() => ({}));
+    const msg = err.error?.message || '';
+    const overloaded = res.status === 503 || res.status === 429 ||
+      /high demand|overloaded|unavailable/i.test(msg);
+
+    if (overloaded && attempt < MAX) {
+      const wait = 4 * attempt; // 4s, 8s, 12s
+      for (let s = wait; s > 0; s--) {
+        onRetry?.(`⏳ Server ausgelastet – neuer Versuch in ${s}s (${attempt}/${MAX - 1})`);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      continue;
+    }
+    if (overloaded) {
+      throw new Error('Google-Server sind gerade überlastet. Bitte in ein paar Minuten nochmal versuchen – der Schlüssel ist in Ordnung.');
+    }
+    if (res.status === 400 || msg.includes('API_KEY')) {
+      throw new Error('Ungültiger API-Schlüssel. Bitte im ⚙-Menü prüfen.');
+    }
+    localStorage.removeItem('gemini_model');
+    throw new Error('API-Fehler ' + res.status + ': ' + msg.substring(0, 80));
+  }
+}
+
 async function getAvailableVisionModel(key) {
   const res = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${key}`);
   if (!res.ok) return null;
@@ -1275,6 +1311,7 @@ async function scanPhoto(e) {
   if (!apiKey) { openApiModal(); return; }
 
   const loading = document.getElementById('scan-loading');
+  document.getElementById('scan-loading-text').textContent = 'KI analysiert Foto …';
   loading.classList.add('active');
   document.getElementById('error-box').style.display = 'none';
 
@@ -1300,37 +1337,9 @@ Gib das Ergebnis NUR als reines JSON zurück (kein Markdown, keine Erklärungen)
 
 Fehlende Felder (uhrzeit, sitz, telefon, reiseziel) komplett weglassen. Nur das JSON ausgeben.`;
 
-    let model = localStorage.getItem('gemini_model');
-    if (!model) {
-      model = await getAvailableVisionModel(apiKey);
-      if (!model) throw new Error('Kein verfügbares Modell gefunden. Bitte ⚙ → Testen ausführen.');
-      localStorage.setItem('gemini_model', model);
-    }
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
-          generationConfig: { temperature: 0.1 }
-        })
-      }
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err.error?.message || '';
-      if (res.status === 429 || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
-        throw new Error('Quota überschritten – bitte kurz warten und nochmal versuchen.');
-      }
-      if (res.status === 400 || msg.includes('API_KEY')) {
-        throw new Error('Ungültiger API-Schlüssel. Bitte im ⚙-Menü prüfen.');
-      }
-      localStorage.removeItem('gemini_model');
-      throw new Error('API-Fehler ' + res.status + ': ' + msg.substring(0, 80));
-    }
-
-    const result = await res.json();
+    const result = await callGemini(apiKey, prompt, base64, mimeType, t => {
+      document.getElementById('scan-loading-text').textContent = t;
+    });
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     // Strip optional markdown code fences
