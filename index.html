@@ -12,18 +12,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f4f8;
-    --surface: #ffffff;
-    --surface2: #eaeaf0;
-    --border: rgba(0,0,0,0.08);
-    --text: #111118;
-    --muted: #8888a0;
-    --accent: #5b4ee0;
-    --green: #15a85e;
-    --green-bg: rgba(21,168,94,0.09);
-    --red: #d13535;
-    --red-bg: rgba(209,53,53,0.08);
-    --brand-red: #e02020;
+    --bg: #dce9f7;
+    /* Translucent so the blue backdrop shows through the frosted panels */
+    --surface: rgba(255,255,255,0.55);
+    --surface2: rgba(255,255,255,0.38);
+    --glass-blur: blur(18px) saturate(140%);
+    --border: rgba(255,255,255,0.65);
+    --shadow: 0 6px 22px rgba(23,64,120,0.11);
+    --text: #0e2139;
+    --muted: #5e7a9c;
+    --accent: #1f6fd0;
+    --accent-soft: rgba(31,111,208,0.13);
+    --green: #0f8a52;
+    --green-bg: rgba(15,138,82,0.14);
+    --red: #c23030;
+    --red-bg: rgba(194,48,48,0.12);
+    --brand-red: #d81f2e;
     --header-h: 68px;
   }
 
@@ -37,14 +41,16 @@
     padding-bottom: 90px;
   }
 
+  /* Soft colour fields the frosted panels blur against */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background-image:
-      linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(79,160,255,0.55), transparent 48%),
+      radial-gradient(circle at 88% 22%, rgba(129,196,255,0.45), transparent 46%),
+      radial-gradient(circle at 70% 88%, rgba(43,110,200,0.32), transparent 52%),
+      linear-gradient(160deg, #e6f1fd 0%, #cfe2f6 55%, #bcd6f0 100%);
     pointer-events: none;
     z-index: 0;
   }
@@ -52,9 +58,9 @@
   /* ── HEADER ── */
   header {
     height: var(--header-h);
-    background: rgba(244,244,248,0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
@@ -89,13 +95,16 @@
 
   .load-icon {
     width: 90px; height: 90px;
-    background: var(--surface2);
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border);
-    border-radius: 22px;
+    border-radius: 24px;
+    box-shadow: var(--shadow);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text);
+    color: var(--accent);
   }
 
   .load-title {
@@ -181,9 +190,9 @@
     position: sticky;
     top: calc(var(--header-h) + 45px);
     z-index: 50;
-    background: rgba(244,244,248,0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.42);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
   }
 
   .stop-time-pill {
@@ -210,8 +219,11 @@
     gap: 12px;
     padding: 16px 16px;
     background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, transform 0.1s;
     user-select: none;
@@ -280,9 +292,9 @@
   .bottom-bar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    background: rgba(244,244,248,0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255,255,255,0.42);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border-top: 1px solid var(--border);
     padding: 14px 20px;
     display: flex;
@@ -320,8 +332,10 @@
 
   /* ── SCAN BUTTON ── */
   .scan-btn {
-    background: transparent;
-    color: var(--text);
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    color: var(--accent);
     border: 1px solid var(--border);
     padding: 16px 32px;
     font-family: 'Syne', sans-serif;
@@ -329,7 +343,8 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     cursor: pointer;
-    border-radius: 12px;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
     width: 100%;
     max-width: 300px;
     transition: all 0.15s;
@@ -370,7 +385,9 @@
   .modal-overlay.open { display: flex; }
 
   .modal-box {
-    background: var(--surface);
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border);
     border-radius: 20px 20px 0 0;
     padding: 28px 24px 40px;
@@ -494,9 +511,9 @@
   /* ── TABS ── */
   .tab-bar {
     display: flex;
-    background: rgba(244,244,248,0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.42);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border-bottom: 1px solid var(--border);
     position: sticky;
     top: var(--header-h);
@@ -532,7 +549,8 @@
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -541,6 +559,15 @@
   }
   .fp-scan-btn:active { opacity: 0.8; }
   .fp-scan-btn:disabled { opacity: 0.5; }
+  /* Secondary picker button sits quieter than the camera button */
+  #fp-pick-btn {
+    background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
 
   .fp-empty {
     text-align: center;
@@ -552,8 +579,11 @@
 
   .fp-stop {
     background: var(--surface);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
     margin-bottom: 12px;
     overflow: hidden;
   }
@@ -671,8 +701,11 @@
   <button class="load-btn" onclick="document.getElementById('file-input').click()">📂 Datei auswählen</button>
   <input type="file" id="file-input" accept=".json,application/json" onchange="loadFile(event)">
   <div class="load-divider">– oder –</div>
-  <button class="scan-btn" onclick="startScan()">📷 Liste fotografieren</button>
+  <button class="scan-btn" onclick="startScan('camera-input')">📷 Liste fotografieren</button>
+  <button class="scan-btn" onclick="startScan('gallery-input')">🖼 Foto aus Galerie wählen</button>
+  <!-- capture= forces the camera and hides the gallery, so the picker input omits it -->
   <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="scanPhoto(event)">
+  <input type="file" id="gallery-input" accept="image/*" style="display:none" onchange="scanPhoto(event)">
 </div>
 
 <!-- LIST VIEW -->
@@ -704,7 +737,7 @@
 <!-- SCAN LOADING -->
 <div class="scan-loading" id="scan-loading">
   <div class="scan-spinner"></div>
-  <div class="scan-loading-text">KI analysiert Foto …</div>
+  <div class="scan-loading-text" id="scan-loading-text">KI analysiert Foto …</div>
 </div>
 
 <!-- PREVIEW MODAL -->
@@ -731,12 +764,16 @@
 <!-- FAHRPLAN -->
 <div id="fahrplan-view">
   <button class="fp-scan-btn" id="fp-scan-btn" onclick="document.getElementById('fp-photo-input').click()">
-    📷 Weitere Seite fotografieren & hinzufügen
+    📷 Seite fotografieren & hinzufügen
+  </button>
+  <button class="fp-scan-btn" id="fp-pick-btn" onclick="document.getElementById('fp-gallery-input').click()">
+    🖼 Foto aus Galerie hinzufügen
   </button>
   <input type="file" id="fp-photo-input" accept="image/*" capture="environment" style="display:none" onchange="scanFahrplan(event)">
+  <input type="file" id="fp-gallery-input" accept="image/*" style="display:none" onchange="scanFahrplan(event)">
   <div class="fp-status" id="fp-status"></div>
   <div id="fp-content">
-    <div class="fp-empty">Noch kein Fahrplan geladen.<br>Foto eines Dokuments machen<br>→ Adressen & Zeiten werden erkannt.<br>Mehrere Fotos möglich – alles wird gesammelt.</div>
+    <div class="fp-empty">Noch kein Fahrplan geladen.<br>Dokument fotografieren oder Foto aus der Galerie wählen<br>→ Adressen &amp; Zeiten werden erkannt.<br>Mehrere Fotos möglich – alles wird gesammelt.</div>
   </div>
   <div id="fp-clear-wrap" style="display:none; padding: 0 0 20px; text-align:center;">
     <button onclick="clearFahrplan()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:8px 18px;border-radius:10px;font-size:13px;cursor:pointer;">✕ Fahrplan leeren</button>
@@ -770,8 +807,11 @@ async function scanFahrplan(e) {
   if (!apiKey) { alert('Bitte zuerst im ⚙-Menü einen Gemini API-Schlüssel eintragen.'); return; }
 
   const btn = document.getElementById('fp-scan-btn');
+  const pickBtn = document.getElementById('fp-pick-btn');
   const status = document.getElementById('fp-status');
+  const btnLabel = btn.innerHTML;
   btn.disabled = true;
+  pickBtn.disabled = true;
   btn.textContent = '⏳ Analysiere …';
   status.textContent = '';
 
@@ -798,23 +838,10 @@ Gib das Ergebnis als JSON zurück, exakt in diesem Format:
 }
 Fehlende Felder mit null belassen. Nur JSON, kein weiterer Text.`;
 
-    let model = localStorage.getItem('gemini_model');
-    if (!model) {
-      model = await getAvailableVisionModel(apiKey);
-      if (!model) throw new Error('Kein Modell gefunden – bitte ⚙ → Testen ausführen.');
-      localStorage.setItem('gemini_model', model);
-    }
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }], generationConfig: { temperature: 0.1 } }) }
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error('API-Fehler ' + res.status + ': ' + (err.error?.message || ''));
-    }
-    const result = await res.json();
+    const result = await callGemini(apiKey, prompt, base64, mimeType, t => {
+      status.style.color = 'var(--muted)';
+      status.textContent = t;
+    });
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
     const data = JSON.parse(text);
@@ -831,7 +858,8 @@ Fehlende Felder mit null belassen. Nur JSON, kein weiterer Text.`;
     status.textContent = '✗ ' + err.message;
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '📷 Dokument fotografieren & analysieren';
+    pickBtn.disabled = false;
+    btn.innerHTML = btnLabel;
   }
 }
 
@@ -855,7 +883,7 @@ function renderFahrplan(data) {
   const container = document.getElementById('fp-content');
   const clearWrap = document.getElementById('fp-clear-wrap');
   if (!data?.haltestellen?.length) {
-    container.innerHTML = '<div class="fp-empty">Noch kein Fahrplan geladen.<br>Foto eines Dokuments machen<br>→ Adressen & Zeiten werden erkannt.<br>Mehrere Fotos möglich – alles wird gesammelt.</div>';
+    container.innerHTML = '<div class="fp-empty">Noch kein Fahrplan geladen.<br>Dokument fotografieren oder Foto aus der Galerie wählen<br>→ Adressen &amp; Zeiten werden erkannt.<br>Mehrere Fotos möglich – alles wird gesammelt.</div>';
     if (clearWrap) clearWrap.style.display = 'none';
     return;
   }
@@ -1182,6 +1210,55 @@ function openApiModal() {
 function closeApiModal() {
   document.getElementById('api-modal').classList.remove('open');
 }
+// Shared Gemini call with retry on 503 (model overloaded) and 429 (rate limit).
+// onRetry lets the caller show progress; returns the parsed JSON response.
+async function callGemini(apiKey, prompt, base64, mimeType, onRetry) {
+  let model = localStorage.getItem('gemini_model');
+  if (!model) {
+    model = await getAvailableVisionModel(apiKey);
+    if (!model) throw new Error('Kein verfügbares Modell gefunden. Bitte ⚙ → Testen ausführen.');
+    localStorage.setItem('gemini_model', model);
+  }
+
+  const MAX = 4;
+  for (let attempt = 1; attempt <= MAX; attempt++) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
+          generationConfig: { temperature: 0.1 }
+        })
+      }
+    );
+    if (res.ok) return await res.json();
+
+    const err = await res.json().catch(() => ({}));
+    const msg = err.error?.message || '';
+    const overloaded = res.status === 503 || res.status === 429 ||
+      /high demand|overloaded|unavailable/i.test(msg);
+
+    if (overloaded && attempt < MAX) {
+      const wait = 4 * attempt; // 4s, 8s, 12s
+      for (let s = wait; s > 0; s--) {
+        onRetry?.(`⏳ Server ausgelastet – neuer Versuch in ${s}s (${attempt}/${MAX - 1})`);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      continue;
+    }
+    if (overloaded) {
+      throw new Error('Google-Server sind gerade überlastet. Bitte in ein paar Minuten nochmal versuchen – der Schlüssel ist in Ordnung.');
+    }
+    if (res.status === 400 || msg.includes('API_KEY')) {
+      throw new Error('Ungültiger API-Schlüssel. Bitte im ⚙-Menü prüfen.');
+    }
+    localStorage.removeItem('gemini_model');
+    throw new Error('API-Fehler ' + res.status + ': ' + msg.substring(0, 80));
+  }
+}
+
 async function getAvailableVisionModel(key) {
   const res = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${key}`);
   if (!res.ok) return null;
@@ -1257,13 +1334,13 @@ function handleModalBgClick(e, id) {
   }
 }
 
-function startScan() {
+function startScan(inputId) {
   const apiKey = localStorage.getItem('gemini_api_key');
   if (!apiKey) {
     openApiModal();
     return;
   }
-  document.getElementById('camera-input').click();
+  document.getElementById(inputId || 'camera-input').click();
 }
 
 async function scanPhoto(e) {
@@ -1275,6 +1352,7 @@ async function scanPhoto(e) {
   if (!apiKey) { openApiModal(); return; }
 
   const loading = document.getElementById('scan-loading');
+  document.getElementById('scan-loading-text').textContent = 'KI analysiert Foto …';
   loading.classList.add('active');
   document.getElementById('error-box').style.display = 'none';
 
@@ -1300,37 +1378,9 @@ Gib das Ergebnis NUR als reines JSON zurück (kein Markdown, keine Erklärungen)
 
 Fehlende Felder (uhrzeit, sitz, telefon, reiseziel) komplett weglassen. Nur das JSON ausgeben.`;
 
-    let model = localStorage.getItem('gemini_model');
-    if (!model) {
-      model = await getAvailableVisionModel(apiKey);
-      if (!model) throw new Error('Kein verfügbares Modell gefunden. Bitte ⚙ → Testen ausführen.');
-      localStorage.setItem('gemini_model', model);
-    }
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }] }],
-          generationConfig: { temperature: 0.1 }
-        })
-      }
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err.error?.message || '';
-      if (res.status === 429 || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
-        throw new Error('Quota überschritten – bitte kurz warten und nochmal versuchen.');
-      }
-      if (res.status === 400 || msg.includes('API_KEY')) {
-        throw new Error('Ungültiger API-Schlüssel. Bitte im ⚙-Menü prüfen.');
-      }
-      localStorage.removeItem('gemini_model');
-      throw new Error('API-Fehler ' + res.status + ': ' + msg.substring(0, 80));
-    }
-
-    const result = await res.json();
+    const result = await callGemini(apiKey, prompt, base64, mimeType, t => {
+      document.getElementById('scan-loading-text').textContent = t;
+    });
     let text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     // Strip optional markdown code fences
